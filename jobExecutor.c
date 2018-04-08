@@ -84,21 +84,22 @@ int main(int argc , char* argv[])
 		if (buff[strlen(buff)-1] == '\n')
 			buff[strlen(buff)-1] = '\0';
 
-		strncpy(buff, buff, strlen(buff));
+		// strncpy(buff, buff, strlen(buff));
 		printf("%s.\n", buff);
-		dp = opendir(buff);
-		if (dp == NULL)
-			fprintf(stderr, "ERROR\n");
-		while ((entry = readdir(dp)) != NULL)
-		{
-			if (!strcmp(entry->d_name,".") || !strcmp(entry->d_name,".."))
-				continue;
-			printf("%s\n", entry->d_name);
-			file_count++;
-		}
+		// dp = opendir(buff);
+		// if (dp == NULL)
+		// 	fprintf(stderr, "ERROR\n");
+		// while ((entry = readdir(dp)) != NULL)
+		// {
+		// 	if (!strcmp(entry->d_name,".") || !strcmp(entry->d_name,".."))
+		// 		continue;
+		// 	printf("%s\n", entry->d_name);
+		// 	file_count++;
+		// }
 		free(buff);
 		buff = NULL;
-		closedir(dp);
+		buff_size = 0;
+		// closedir(dp);
 		printf("COunt %d\n", file_count);
 		file_count = 0;
 		lines++;
@@ -112,17 +113,19 @@ int main(int argc , char* argv[])
 	if (W>lines)
 		W = lines;
 	int dirs_per_worker = lines/W;
-	if (lines%W != 0)
+	int modulo = lines%W;
+	if (modulo != 0)
 		dirs_per_worker++;
+	int tmp_mod = modulo;
 	printf("dirs_per_worker %d and workers %d\n",dirs_per_worker,W);
 	array = malloc(sizeof(char)*lines);
 	// fclose(fp);
 
-	static struct sigaction act;
-	act.sa_handler = catchchild;
-	// act.sa_handler = SIG_IGN;
-	sigfillset(&(act.sa_mask));
-	sigaction(SIGCHLD,&act,NULL);
+	// static struct sigaction act;
+	// act.sa_handler = catchchild;
+	// // act.sa_handler = SIG_IGN;
+	// sigfillset(&(act.sa_mask));
+	// sigaction(SIGCHLD,&act,NULL);
 
 	int *pid_ar = malloc(sizeof(int)*W);
 	int n = 0;
@@ -141,30 +144,28 @@ int main(int argc , char* argv[])
 		pid_ar[i] = fork();
 		if (!pid_ar[i])
 		{
-			char name[256];
+			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));
 			sprintf(name, "%s%d", FIFO,getpid());
-			while ((writefd = open(FIFO1, O_WRONLY|O_NONBLOCK))<0);
-			write(writefd, name, sizeof(char)*256);
-			close(writefd);
 			
 			int num_of_paths;
 			if ((mkfifo(name, PERMS)<0))
 				perror("Error : creating FIFO\n");
 			
-			printf("New Worker with pid %d\n",getpid());
+			printf("New Worker with pid %d and fifo %s\n",getpid(),name);
 			while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
 			while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0); 		// read number of paths 
 			printf("num_of_paths %d\n", num_of_paths);
 			char **path_array = malloc(sizeof(char*)*num_of_paths);
 			char *tmp_buff; 
+			tmp_buff = malloc(sizeof(char)*(max_chars));
 			for (y=0;y<num_of_paths;y++)
 			{
-				tmp_buff = malloc(sizeof(char)*(max_chars));
 				while ((n=read(readfd,tmp_buff, sizeof(char)*(max_chars)))<=0);
 				path_array[y] = malloc(sizeof(char)*(strlen(tmp_buff)+1));
-				strncpy(path_array[y], tmp_buff , strlen(tmp_buff)+1);
-				free(tmp_buff);
+				strncpy(path_array[y], tmp_buff , strlen(tmp_buff));
 			}
+			close(readfd);
+			free(tmp_buff);
 			
 			for (y=0;y<num_of_paths;y++)
 			{
@@ -173,37 +174,54 @@ int main(int argc , char* argv[])
 			}
 			free(path_array);
 			free(pid_ar);
-			close(readfd);
+			free(name);
 			exit(0);
 		}
 		else
 		{	
-			while ((readfd = open(FIFO1,O_RDONLY|O_NONBLOCK))<0);
-			char name[256];
-			while ((n = read(readfd, name, sizeof(char)*256))<=0);
-			close(readfd);
-
-			while ((writefd = open(name,O_WRONLY|O_NONBLOCK))<0);
-			if (temp_lines>=dirs_per_worker)
-				num_of_paths = dirs_per_worker;
+			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));
+			sprintf(name, "%s%d", FIFO,pid_ar[i]);
+			if (modulo)									//split work equally
+			{
+				if (temp_lines>=dirs_per_worker && tmp_mod>0)
+				{
+					num_of_paths = dirs_per_worker;
+					tmp_mod--;
+				}
+				else 
+					num_of_paths = dirs_per_worker-1;
+			}
 			else
-				num_of_paths = dirs_per_worker-1;
+				num_of_paths = dirs_per_worker;
+			while ((writefd = open(name,O_WRONLY|O_NONBLOCK))<0);
 			write(writefd, &num_of_paths, sizeof(int));		//inform child how many paths to wait
-			buff = malloc(sizeof(char)*max_chars);
-			buff_size = max_chars;
 			for (y=0;y<num_of_paths;y++)
 			{
 				getline(&buff,&buff_size,fp);
 				if (buff[strlen(buff)-1] == '\n')
+				{
+					printf("------EDWWW\n");
 					buff[strlen(buff)-1] = '\0';
-				printf("PARENT %s\n", buff);
-				write(writefd, buff, sizeof(char)*(max_chars));
+				}
+				else
+				{
+					printf("--------HEREEEEEEE\n");
+					buff[max_chars-1] = '\0';
+				}
+
+				printf("PARENT->%s\n",buff);
+				write(writefd, buff, sizeof(char)*max_chars); //enonei to teleutaio string , lathos
 				temp_lines--;
+				free(buff);
+				buff = NULL;
+				buff_size = 0;
 			}
-			printf("Just finish sending paths\n");
-			free(buff);
 			close(writefd);
+			printf("Just finish sending paths\n");
+			// free(buff);
 			unlink(name);
+			free(name);
+			num_of_paths = 0;
 		}
 	}
 
