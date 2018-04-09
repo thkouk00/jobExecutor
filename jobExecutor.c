@@ -8,18 +8,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "send_msg.h"
+#include "list.h"
+#include "map_file.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
 #define FIFO1 "/home/thanos/Desktop/fifo1"
 #define FIFO2 "/home/thanos/Desktop/fifo2"
 #define PERMS 0666
-
-typedef struct Message
-{
-	pid_t pid;
-	char **path_table;	
-}message;
-
 
 
 void Usage(char *prog_name)			/* Usage */
@@ -36,7 +32,7 @@ void catchchild(int signo)
 	printf("Catching: returning\n");
 }
 
-char *array; //keep track of paths , every cell has a pid
+char *paths_to_pid; //keep track of paths , every cell has a pid
 
 int main(int argc , char* argv[])
 {
@@ -81,11 +77,11 @@ int main(int argc , char* argv[])
 	{
 		if (x>max_chars)
 			max_chars = x;
-		if (buff[strlen(buff)-1] == '\n')
+		if (buff[strlen(buff)-1] == '\n')		//axreiasto edw logika
 			buff[strlen(buff)-1] = '\0';
 
 		// strncpy(buff, buff, strlen(buff));
-		printf("%s.\n", buff);
+		// printf("%s.\n", buff);
 		// dp = opendir(buff);
 		// if (dp == NULL)
 		// 	fprintf(stderr, "ERROR\n");
@@ -96,11 +92,11 @@ int main(int argc , char* argv[])
 		// 	printf("%s\n", entry->d_name);
 		// 	file_count++;
 		// }
+		// closedir(dp);
 		free(buff);
 		buff = NULL;
 		buff_size = 0;
-		// closedir(dp);
-		printf("COunt %d\n", file_count);
+		// printf("COunt %d\n", file_count);
 		file_count = 0;
 		lines++;
 	};
@@ -118,7 +114,6 @@ int main(int argc , char* argv[])
 		dirs_per_worker++;
 	int tmp_mod = modulo;
 	printf("dirs_per_worker %d and workers %d\n",dirs_per_worker,W);
-	array = malloc(sizeof(char)*lines);
 	// fclose(fp);
 
 	// static struct sigaction act;
@@ -151,13 +146,11 @@ int main(int argc , char* argv[])
 			if ((mkfifo(name, PERMS)<0))
 				perror("Error : creating FIFO\n");
 			
-			printf("New Worker with pid %d and fifo %s\n",getpid(),name);
 			while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
 			while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0); 		// read number of paths 
-			printf("num_of_paths %d\n", num_of_paths);
+			
 			char **path_array = malloc(sizeof(char*)*num_of_paths);
-			char *tmp_buff; 
-			tmp_buff = malloc(sizeof(char)*(max_chars));
+			char *tmp_buff = malloc(sizeof(char)*(max_chars));
 			for (y=0;y<num_of_paths;y++)
 			{
 				while ((n=read(readfd,tmp_buff, sizeof(char)*(max_chars)))<=0);
@@ -166,62 +159,73 @@ int main(int argc , char* argv[])
 			}
 			close(readfd);
 			free(tmp_buff);
-			
+			// make maps and tries for every directory
+			FILE *file;
+			int count_lines = 0;
+			listNode **info = malloc(sizeof(listNode*)*num_of_paths);
 			for (y=0;y<num_of_paths;y++)
 			{
-				printf("CHILD %d -> %s\n", getpid(),path_array[y]);
+				dp = opendir(path_array[y]);
+				if (dp == NULL)
+					fprintf(stderr, "ERROR in open directory\n");
+				printf("%s:\n",path_array[y]);
+				while ((entry = readdir(dp)) != NULL)
+				{
+					if (!strcmp(entry->d_name,".") || !strcmp(entry->d_name,".."))
+						continue;
+					char *filename = malloc(sizeof(char)*(strlen(path_array[y])+strlen(entry->d_name)+2));
+					sprintf(filename, "%s/%s",path_array[y],entry->d_name);
+					
+					file = fopen(filename, "r");
+					int max = 0;
+					count_lines = 0;
+					while ((x=getline(&buff,&buff_size,file))>0)
+					{
+						if (x>max)
+							max = x;
+						count_lines++;
+						free(buff);
+						buff = NULL;
+						buff_size = 0;
+					}
+					printf("Count lines %d\n", count_lines);
+					insert(&info[y],filename,count_lines);	//lines to make map
+					fseek(file, SEEK_SET, 0);
+					map_file(&file,&info[y],filename,max,count_lines);					//func to map file
+					fclose(file);
+				}
+				closedir(dp);
+				
+				// listNode *cur = info[0];
+				// while (cur->next)
+				// {
+				// 	cur = cur->next;
+				// 	printf("%s\n", cur->name);
+				// 	for (int k=0;k<5;k++)
+				// 		printf("%s\n", cur->map[k]);
+				// 	break;
+				// }
+				print(&info[y]);
+
+			}
+
+
+			for (y=0;y<num_of_paths;y++)
+			{
+				// printf("CHILD %d -> %s\n", getpid(),path_array[y]);
 				free(path_array[y]);
 			}
 			free(path_array);
 			free(pid_ar);
 			free(name);
+			fclose(fp);
 			exit(0);
 		}
 		else
 		{	
-			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));
-			sprintf(name, "%s%d", FIFO,pid_ar[i]);
-			if (modulo)									//split work equally
-			{
-				if (temp_lines>=dirs_per_worker && tmp_mod>0)
-				{
-					num_of_paths = dirs_per_worker;
-					tmp_mod--;
-				}
-				else 
-					num_of_paths = dirs_per_worker-1;
-			}
-			else
-				num_of_paths = dirs_per_worker;
-			while ((writefd = open(name,O_WRONLY|O_NONBLOCK))<0);
-			write(writefd, &num_of_paths, sizeof(int));		//inform child how many paths to wait
-			for (y=0;y<num_of_paths;y++)
-			{
-				getline(&buff,&buff_size,fp);
-				if (buff[strlen(buff)-1] == '\n')
-				{
-					printf("------EDWWW\n");
-					buff[strlen(buff)-1] = '\0';
-				}
-				else
-				{
-					printf("--------HEREEEEEEE\n");
-					buff[max_chars-1] = '\0';
-				}
-
-				printf("PARENT->%s\n",buff);
-				write(writefd, buff, sizeof(char)*max_chars); //enonei to teleutaio string , lathos
-				temp_lines--;
-				free(buff);
-				buff = NULL;
-				buff_size = 0;
-			}
-			close(writefd);
-			printf("Just finish sending paths\n");
-			// free(buff);
-			unlink(name);
-			free(name);
-			num_of_paths = 0;
+			//send paths to workers
+			send_msg(&fp, max_chars,pid_ar[i],&modulo, &temp_lines,&dirs_per_worker,&tmp_mod);
+			
 		}
 	}
 

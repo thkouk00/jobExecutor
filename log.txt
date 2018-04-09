@@ -1,0 +1,29 @@
+Lines 3
+dirs_per_worker 1 and workers 3
+/home/thanos/syspro_paths/test_directories:
+Count lines 3
+Count lines 3
+Count lines 5
+/home/thanos/syspro_paths/test_directories/foo.txt
+/home/thanos/syspro_paths/test_directories/foo2.txt
+/home/thanos/syspro_paths/test_directories/foo3.txt
+Lines 3
+dirs_per_worker 1 and workers 3
+/home/thanos/syspro_paths/test_directories1:
+Count lines 2
+Count lines 386
+/home/thanos/syspro_paths/test_directories1/c.txt
+/home/thanos/syspro_paths/test_directories1/smallDataset.txt
+Lines 3
+dirs_per_worker 1 and workers 3
+/home/thanos/syspro_paths/test_directories2:
+Count lines 3
+Count lines 4
+/home/thanos/syspro_paths/test_directories2/text1.txt
+/home/thanos/syspro_paths/test_directories2/text2.txt
+Lines 3
+dirs_per_worker 1 and workers 3
+Waited for 10667
+Waited for 10668
+Waited for 10669
+~End of parent!~
