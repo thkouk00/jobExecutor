@@ -11,6 +11,7 @@
 #include "send_msg.h"
 #include "list.h"
 #include "map_file.h"
+#include "trie.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
 #define FIFO1 "/home/thanos/Desktop/fifo1"
@@ -105,7 +106,7 @@ int main(int argc , char* argv[])
 	
 	int temp_lines = lines;		
 	int num_of_paths = 0 ;		//before sent msg to child, holds number of paths to sent
-	fseek(fp, SEEK_SET, 0);
+	fseek(fp, 0, SEEK_SET);
 	if (W>lines)
 		W = lines;
 	int dirs_per_worker = lines/W;
@@ -164,7 +165,12 @@ int main(int argc , char* argv[])
 			int count_lines = 0;
 			int max = 0;
 			//list to hold maps and tries for every doc
-			listNode **info = malloc(sizeof(listNode*)*num_of_paths);		
+			listNode **info = malloc(sizeof(listNode*)*num_of_paths);	
+			trieNode_t *trie;
+			CreateTrie(&trie);
+			
+			int *offset_array ;
+			int tmp_size = 20;
 			for (y=0;y<num_of_paths;y++)
 			{
 				dp = opendir(path_array[y]);
@@ -173,6 +179,7 @@ int main(int argc , char* argv[])
 				printf("%s:\n",path_array[y]);
 				while ((entry = readdir(dp)) != NULL)
 				{
+
 					if (!strcmp(entry->d_name,".") || !strcmp(entry->d_name,".."))
 						continue;
 					char *filename = malloc(sizeof(char)*(strlen(path_array[y])+strlen(entry->d_name)+2));
@@ -181,8 +188,25 @@ int main(int argc , char* argv[])
 					file = fopen(filename, "r");
 					max = 0;
 					count_lines = 0;
+					int pos = 1;
+					offset_array = malloc(sizeof(int)*tmp_size);
+					offset_array[0] = 0;
+					int count = 0;
 					while ((x=getline(&buff,&buff_size,file))>0)
 					{
+						count+=x;
+						if (pos-1 < tmp_size)
+						{
+							offset_array[pos] = count;
+							pos++;
+						}
+						else
+						{
+							tmp_size +=tmp_size;
+							offset_array = realloc(offset_array, sizeof(int)*(tmp_size));
+							offset_array[pos] = count;
+							pos++;
+						}
 						if (x>max)
 							max = x;
 						count_lines++;
@@ -190,14 +214,23 @@ int main(int argc , char* argv[])
 						buff = NULL;
 						buff_size = 0;
 					}
-					fseek(file, SEEK_SET, 0);
-					insert(&info[y],filename,count_lines);	//lines to make map
-					map_file(file,&info[y],filename,max);					//func to map file
+					fseek(file, 0, SEEK_SET);
+					insert(&info[y],filename,count_lines,max,offset_array);	
+					printf("LENGTH OF OFARRAY %d\n", pos);	
+					for (int k=0;k<pos-1;k++)
+						printf("OF %d\n", offset_array[k]);	
+					map_file(file,&info[y],filename);				//function to map file
 					fclose(file);
 					free(filename);
 				}
 				closedir(dp);
+
+				//offset needs fix
 				//eisagogi sto trie
+				// fill_trie(&info[y], &trie,y,offset_array);
+				printNode(&trie, "syspro");
+				// printNode(&trie, "tararaa");
+				printNode(&trie, "Theatre,");
 
 			}
 

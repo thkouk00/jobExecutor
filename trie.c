@@ -17,6 +17,7 @@ trieNode_t * CreateTrieNode(char key)		//initialize root
 	}
 
 	node->key = key;
+	printf("NODE KEY is %c\n", node->key);
 	node->children = NULL;
 	node->neighbor = NULL;
 	// node->plist = NULL;
@@ -27,7 +28,7 @@ trieNode_t * CreateTrieNode(char key)		//initialize root
 // add node to trie
 // every node has only one child and one neighbor
 // always start from root
-void AddNode(trieNode_t **root,char *key,int id)
+void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 {
 	char *tmpstr = key;
 	char *tmp1 ;
@@ -41,7 +42,7 @@ void AddNode(trieNode_t **root,char *key,int id)
 
 	
 	tempNode = *root;
-	
+	printf("INSERTING %s\n", tmpstr);
 	while (*key != '\0')
 	{
 		if (tempNode->children == NULL)		//if child is NULL then create new Node
@@ -83,6 +84,9 @@ void AddNode(trieNode_t **root,char *key,int id)
 	}
 	
 	tempNode->endofword = 1;
+	trie_list *cur = tempNode->plist;
+	printf("NAME IS %s\n", name);
+	insert_to_plist(&(tempNode->plist), name, line_num, offset);
 	// listNode *cur = tempNode->plist;
 	// insert(&(tempNode->plist),id,tmpstr);		// posting list for word
 }
@@ -115,6 +119,7 @@ void printNode(trieNode_t **root,char *key)
 			if (tempNode->key == *key)
 			{
 				buffer[i] = tempNode->key;
+				printf("%c\n", tempNode->key);
 				flag = 1;
 				break;
 			}
@@ -126,6 +131,7 @@ void printNode(trieNode_t **root,char *key)
 					if (tempNode->key == *key)
 					{
 						buffer[i] = tempNode->key;
+						printf("%c\n", tempNode->key);
 						flag  = 1;
 						found = 1;
 						break;
@@ -161,7 +167,7 @@ void printNode(trieNode_t **root,char *key)
 	if (finish)
 		printf("PRINT : %s\n",buffer);
 
-
+	// printf("%s\n",buffer);
 	free(buffer);
 }
 
