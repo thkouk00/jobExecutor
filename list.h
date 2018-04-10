@@ -10,7 +10,6 @@
 typedef struct list 		//for posting list
 {
 	char *name;
-	trieNode_t *trie;
 	char **map;
 	int lines;
 	//mia domi trie kai mia domi map
@@ -26,6 +25,7 @@ typedef struct list_search 		// for search
 
 listNode *CreateList(listNode **);
 void insert(listNode **,char *,int);
+void fill_trie(listNode **,int);
 void print(listNode **);
 void length(listNode **);
 void FreeList(listNode **);

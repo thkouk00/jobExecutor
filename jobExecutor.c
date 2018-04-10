@@ -159,10 +159,12 @@ int main(int argc , char* argv[])
 			}
 			close(readfd);
 			free(tmp_buff);
-			// make maps and tries for every directory
+			// one trie per Worker , one map per file
 			FILE *file;
 			int count_lines = 0;
-			listNode **info = malloc(sizeof(listNode*)*num_of_paths);
+			int max = 0;
+			//list to hold maps and tries for every doc
+			listNode **info = malloc(sizeof(listNode*)*num_of_paths);		
 			for (y=0;y<num_of_paths;y++)
 			{
 				dp = opendir(path_array[y]);
@@ -177,7 +179,7 @@ int main(int argc , char* argv[])
 					sprintf(filename, "%s/%s",path_array[y],entry->d_name);
 					
 					file = fopen(filename, "r");
-					int max = 0;
+					max = 0;
 					count_lines = 0;
 					while ((x=getline(&buff,&buff_size,file))>0)
 					{
@@ -188,33 +190,20 @@ int main(int argc , char* argv[])
 						buff = NULL;
 						buff_size = 0;
 					}
-					printf("Count lines %d\n", count_lines);
-					insert(&info[y],filename,count_lines);	//lines to make map
 					fseek(file, SEEK_SET, 0);
-					map_file(&file,&info[y],filename,max,count_lines);					//func to map file
+					insert(&info[y],filename,count_lines);	//lines to make map
+					map_file(file,&info[y],filename,max);					//func to map file
 					fclose(file);
+					free(filename);
 				}
 				closedir(dp);
-				
-				// listNode *cur = info[0];
-				// while (cur->next)
-				// {
-				// 	cur = cur->next;
-				// 	printf("%s\n", cur->name);
-				// 	for (int k=0;k<5;k++)
-				// 		printf("%s\n", cur->map[k]);
-				// 	break;
-				// }
-				print(&info[y]);
+				//eisagogi sto trie
 
 			}
 
 
 			for (y=0;y<num_of_paths;y++)
-			{
-				// printf("CHILD %d -> %s\n", getpid(),path_array[y]);
 				free(path_array[y]);
-			}
 			free(path_array);
 			free(pid_ar);
 			free(name);

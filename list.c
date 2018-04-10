@@ -21,8 +21,7 @@ void insert(listNode **head,char *name,int lines)
 
 	listNode *n = (listNode*)malloc(sizeof(struct list));
 	n->name = malloc(sizeof(char)*(strlen(name)+1));
-	strcpy(n->name, name);
-	CreateTrie(&(n->trie));
+	strncpy(n->name, name,strlen(name));
 	n->lines = lines;
 	n->map = malloc(sizeof(char*)*lines);
 	n->next = NULL;
@@ -31,6 +30,43 @@ void insert(listNode **head,char *name,int lines)
 		cur = cur->next;
 	cur->next = n;
 }
+
+
+void fill_trie(listNode **head,int max_chars)
+{
+	listNode *cur = *head;
+	printf("MAXCHARS IN LIST %d\n", max_chars);
+	char *str;
+	char *str1;
+	char delimiter[] = " \t\n";
+	if (cur->next == NULL)
+		printf("Empty list\n");
+	else
+	{
+		str = malloc(sizeof(char)*max_chars);
+		while (cur->next)
+		{
+			cur = cur->next; 
+			printf("IN for %s and lines are %d\n",cur->name,cur->lines);
+			for (int i =0;i<cur->lines;i++)
+			{
+				printf("i:%d\n", i);
+				strncpy(str, cur->map[i], strlen(cur->map[i])+1);
+				str1 = strtok(str, delimiter);
+				while (str1!=NULL)
+				{
+					printf("->%s<-\n", str1);
+					// D[i]++;						//how many words there are in every sentence
+					// AddNode(&(cur->trie),str1,i);
+					str1 = strtok(NULL, delimiter);
+				}
+			}
+		}
+		// free(str);
+	}
+}
+
+
 
 void print(listNode **head)
 {

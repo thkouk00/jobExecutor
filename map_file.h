@@ -5,7 +5,7 @@
 #include <string.h>
 #include "list.h"
 
-void map_file(FILE **,listNode **,char *,int,int);
+void map_file(FILE *,listNode **,char *,int);
 
 
 #endif
