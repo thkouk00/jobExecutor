@@ -170,7 +170,6 @@ int main(int argc , char* argv[])
 			CreateTrie(&trie);
 			
 			int *offset_array ;
-			int tmp_size = 20;
 			for (y=0;y<num_of_paths;y++)
 			{
 				dp = opendir(path_array[y]);
@@ -188,6 +187,7 @@ int main(int argc , char* argv[])
 					file = fopen(filename, "r");
 					max = 0;
 					count_lines = 0;
+					int tmp_size = 20;
 					int pos = 1;
 					offset_array = malloc(sizeof(int)*tmp_size);
 					offset_array[0] = 0;
@@ -215,22 +215,18 @@ int main(int argc , char* argv[])
 						buff_size = 0;
 					}
 					fseek(file, 0, SEEK_SET);
-					insert(&info[y],filename,count_lines,max,offset_array);	
-					printf("LENGTH OF OFARRAY %d\n", pos);	
-					for (int k=0;k<pos-1;k++)
-						printf("OF %d\n", offset_array[k]);	
+					pos--;	 // arxika htan katw apo to insert
+					insert(&info[y],filename,count_lines,max,offset_array,pos);	
 					map_file(file,&info[y],filename);				//function to map file
 					fclose(file);
 					free(filename);
 				}
 				closedir(dp);
 
-				//offset needs fix
 				//eisagogi sto trie
-				// fill_trie(&info[y], &trie,y,offset_array);
-				printNode(&trie, "syspro");
-				// printNode(&trie, "tararaa");
-				printNode(&trie, "Theatre,");
+				fill_trie(&info[y], &trie);
+				// printNode(&trie, "syspro");
+				// printNode(&trie, "Theatre,");
 
 			}
 
@@ -251,6 +247,12 @@ int main(int argc , char* argv[])
 		}
 	}
 
+	printf("GIVE INPUT\n");
+	while ((x=getline(&buff,&buff_size,stdin))<=0);
+	printf("INPUT\n");
+	printf("%s\n", buff);
+
+	//end of program
 	pid_t pid;
 	for (i=0;i<W;i++)
 	{

@@ -11,7 +11,7 @@ listNode *CreateList(listNode **head)		//create head for list
 	return *head;
 }
 
-void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array)
+void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array,int num_of_elements)
 {
 	if (*head == NULL)
 	{
@@ -20,11 +20,17 @@ void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array
 	listNode *cur = *head;
 
 	listNode *n = (listNode*)malloc(sizeof(struct list));
-	n->name = malloc(sizeof(char)*(strlen(name)+1));
-	strncpy(n->name, name,strlen(name)+1);
+	n->name = malloc(sizeof(char)*(strlen(name)+2));
+	strncpy(n->name, name,strlen(name)+1); //htan +1
+	n->name[strlen(name)+2] = '\0';
+	// printf("NAME %s and len %ld\n", n->name,strlen(name));
 	n->lines = lines;
 	n->max_chars = max_chars;
 	n->map = malloc(sizeof(char*)*lines);
+
+	n->offset_array = malloc(sizeof(int)*(num_of_elements));
+	
+	memcpy(n->offset_array, offset_array, sizeof(int)*num_of_elements); 
 	n->next = NULL;
 	// printf("INSERT NAME ->%s and %s\n", n->name,name);
 	while (cur->next)
@@ -33,7 +39,7 @@ void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array
 }
 
 
-void fill_trie(listNode **head,trieNode_t **root,int path_num,int **offset_array)
+void fill_trie(listNode **head,trieNode_t **root)
 {
 	listNode *cur = *head;
 	char *str;
@@ -48,7 +54,7 @@ void fill_trie(listNode **head,trieNode_t **root,int path_num,int **offset_array
 			cur = cur->next; 
 			str = malloc(sizeof(char)*(cur->max_chars+1));
 			
-			printf("NAME:\n%s\n",cur->name);
+			// printf("NAME:%s\n",cur->name);
 			for (int i =0;i<cur->lines;i++)
 			{
 				// printf("i:%d\n", i);
@@ -59,12 +65,14 @@ void fill_trie(listNode **head,trieNode_t **root,int path_num,int **offset_array
 				{
 					
 					//anti gia name kai path_num na dw mipos perasw to full path
-					// AddNode(root,str1,i,cur->name,offset_array[path_num][i]);
+					AddNode(root,str1,i,cur->name,cur->offset_array[i]);
+					// printf("OFSET %d is %d\n",i,cur->offset_array[i]);
+					// printf("%s\n", str1);
 					str1 = strtok(NULL, delimiter);
 				}
 			}
+			free(str);
 		}
-		free(str);
 	}
 }
 
@@ -130,12 +138,14 @@ void insert_lineInfo(line_info **head,int line, long offset)
 	while (cur->next)					// insert new node at end of list
 	{
 		cur = cur->next;
+		// printf("Line %d - ofs %ld\n",cur->line,cur->offset);
 	}
 	line_info *n = (line_info*)malloc(sizeof(struct Line_info));
 	n->line = line;
 	n->offset = offset;
 	n->next = NULL;
 	cur->next = n;
+	// printf("AND line %d - ofs %ld\n", n->line,n->offset);
 }
 
 void print_lineInfo(line_info **head)
@@ -173,7 +183,9 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 {
 	if (*head == NULL)
 	{
+		// printf("EIMAI STO PLIST\n");
 		*head = Create_Plist(head);
+		// printf("GOT %p \n",*head);
 	}
 	trie_list *cur = *head;
 	int flag = 0;
@@ -185,15 +197,17 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 			// printf("YPARXEI PLIST\n");
 			flag = 1;
 			cur->number_of_times++;
-			insert_lineInfo(&cur->linfo, line, offset);
+			insert_lineInfo(&(cur->linfo), line, offset);
 			break;
 		}
 	}
 	if (!flag)
 	{
 		trie_list *temp = (trie_list*)malloc(sizeof(struct Trie_list));
-		temp->name = malloc(sizeof(char)*(strlen(name)+1));
-		strcpy(temp->name,name);
+		temp->name = malloc(sizeof(char)*(strlen(name)+2));
+		strncpy(temp->name,name,strlen(name)+1);
+		// printf("PLIST %s\n", temp->name);
+		temp->linfo = NULL;
 		// printf("NAMEinPLIST %s\n", temp->name);
 		// temp->path_num = path_num;
 		temp->number_of_times = 1;
