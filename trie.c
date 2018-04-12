@@ -170,11 +170,117 @@ void printNode(trieNode_t **root,char *key)
 	// printf("%s\n",buffer);
 	free(buffer);
 }
+///////////////////////////////////
+void find_word(trieNode_t **root,char *key,char *name,int *number)
+{
+	printf("KEY %s\n", key);
+	int found = 0 , finish = 1, flag = 0;
+	char *str = key;
+	char *str1 ;
+	char *buffer = malloc(sizeof(char)*(strlen(str)+1));
+	if (buffer == NULL)
+		printf("malloc error\n");
 
+	trieNode_t *tempNode = NULL;
+
+	if (*root == NULL)
+	{
+		fprintf(stderr, "Not initialized Trie!\n");
+		exit(1);
+	}
+	
+	tempNode = *root;
+	int i;
+	for (i=0;i<strlen(str);i++)
+	{
+		while (tempNode->children!=NULL)
+		{
+			tempNode = tempNode->children;
+			if (tempNode->key == *key)
+			{
+				buffer[i] = tempNode->key;
+				// printf("%c\n", tempNode->key);
+				flag = 1;
+				break;
+			}
+			else
+			{
+				while (tempNode->neighbor != NULL)
+				{
+					tempNode = tempNode->neighbor;
+					if (tempNode->key == *key)
+					{
+						buffer[i] = tempNode->key;
+						// printf("%c\n", tempNode->key);
+						flag  = 1;
+						found = 1;
+						break;
+					}
+				}
+				if (!flag)
+					break;
+				if (found)
+					break;
+			}
+		}
+		if (!flag)
+			break;
+		flag = 0;
+		key++;
+
+	}
+	buffer[i] = '\0'; 	
+	if (str[strlen(str)-1] == '\n')
+		str[strlen(str)-1] = '\0';
+	
+	printf("BUFFER %s\nSTR %s and %d\n", buffer,str,tempNode->endofword);
+	if (!strncmp(buffer, str,strlen(str)) && tempNode->endofword)
+	{
+		finish = 1;
+		printf("HEREE\n");
+		// free(buffer);
+		int count = 0;
+		char *name1;
+		trie_list *cur = tempNode->plist;
+		while (cur->next)
+		{
+			cur = cur->next;
+			printf("***%s\n", cur->name);
+			if (cur->number_of_times > count)
+			{
+				count = cur->number_of_times;
+				name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
+				strcpy(name, cur->name);
+			}
+		}
+		*number = count;
+		name = malloc(sizeof(char)*(strlen(name1)+1));
+		printf("NAME %s and num %d\n", name,*number);
+		// return name;
+			// tempNode->plist;	//h lista
+			// return name tempNode->plist; 		// trav
+	}
+	else
+	{
+		finish = 0;
+		printf("%s not found\n",str);
+	}
+	if (finish)
+		printf("PRINT : %s\n",buffer);
+
+	// printf("%s\n",buffer);
+	free(buffer);
+}
+
+
+
+
+//////////////////////////////////
 // find word returns posting list for a given word if exists , else returns NULL
 // same implementation as printNode
-// listNode *find_word(trieNode_t **root,char *key)
+// char* find_word(trieNode_t **root,char *key,char *name,int *number)
 // {
+// 	printf("ZDAROVA\n");
 // 	int found = 0 , finish = 1 , flag = 0;
 // 	char *str = key;
 // 	char *str1 ;
@@ -200,6 +306,7 @@ void printNode(trieNode_t **root,char *key)
 // 			if (tempNode->key == *key)
 // 			{
 // 				buffer[i] = tempNode->key;
+// 				printf("%c\n", buffer[i]);
 // 				flag = 1;
 // 				break;
 // 			}
@@ -212,7 +319,7 @@ void printNode(trieNode_t **root,char *key)
 // 					if (tempNode->key == *key)
 // 					{
 // 						buffer[i] = tempNode->key;
-
+// 						printf("%c\n", buffer[i]);
 // 						flag = 1;
 // 						found = 1;
 // 						break;
@@ -233,8 +340,10 @@ void printNode(trieNode_t **root,char *key)
 // 		key++;
 // 	}
 // 	buffer[i] = '\0'; 	
+// 	printf("____%s\n", buffer);
 // 	if (!flag && !finish)
 // 	{
+// 		printf("EDW\n");
 // 		return NULL;
 // 	}
 // 	if (!strcmp(buffer, str) && tempNode->endofword)
@@ -246,8 +355,27 @@ void printNode(trieNode_t **root,char *key)
 // 		}
 // 		else
 // 		{
+// 			printf("HEREE\n");
 // 			free(buffer);
-// 			return tempNode->plist;
+// 			int count = 0;
+// 			char *name1;
+// 			trie_list *cur = tempNode->plist;
+// 			while (cur->next)
+// 			{
+// 				cur = cur->next;
+// 				if (cur->number_of_times > count)
+// 				{
+// 					count = cur->number_of_times;
+// 					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
+// 					strcpy(name, cur->name);
+// 				}
+// 			}
+// 			*number = count;
+// 			name = malloc(sizeof(char)*(strlen(name1)+1));
+// 			printf("NAME %s and num %d\n", name,*number);
+// 			return name;
+// 			// tempNode->plist;	//h lista
+// 			// return name tempNode->plist; 		// traverse list and find the doc
 // 		}
 // 	}
 // 	else

@@ -19,9 +19,25 @@ void map_file(FILE *file,listNode **info,char *filename)
 	for (i=0;i<cur->lines;i++)
 	{
 		fgets(buff, cur->max_chars+1, file);
-		cur->map[i] = malloc(sizeof(char)*(strlen(buff)+1));
-		strncpy(cur->map[i], buff, strlen(buff));
-		// printf("%s", cur->map[i]);
+		// cur->map[i] = malloc(sizeof(char)*(strlen(buff)+1));
+		// printf("size %ld\n", strlen(buff));
+		// if (buff[strlen(buff)-1] =='\n')
+		// 	printf("***%s\n", buff);
+		if (buff[strlen(buff)-1] =='\n')
+		{
+			cur->map[i] = malloc(sizeof(char)*(strlen(buff)));
+			strncpy(cur->map[i], buff, strlen(buff)-1);
+
+			cur->map[i][strlen(buff)-1] = '\0';
+			// cur->map[i][strlen(buff)] = '\0';
+		}	
+		else
+		{
+			cur->map[i] = malloc(sizeof(char)*(strlen(buff)+1));
+			strncpy(cur->map[i], buff, strlen(buff));
+			// cur->map[i][strlen(buff)+1] = '\0';
+		}
+		// printf("%s\n", cur->map[i]);
 		
 
 	}

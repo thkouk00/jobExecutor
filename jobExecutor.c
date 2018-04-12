@@ -128,7 +128,7 @@ int main(int argc , char* argv[])
 	for (i=0;i<W;i++)
 	{
 		pid_ar[i] = fork();
-		if (!pid_ar[i])
+		if (!pid_ar[i])					// child process 
 		{
 			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));
 			sprintf(name, "%s%d", FIFO,getpid());
@@ -236,10 +236,49 @@ int main(int argc , char* argv[])
 				{
 					buff = malloc(sizeof(char)*(size_to_read+1));
 					while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
-					printf("TOOK %s\n", buff);
-					printf("STOP is %d\n", stop);
-					printf("AFTER PAUSE %d\n", getpid());
-					// close(readfd);
+					if (!strncmp(buff, "/search ", strlen("/search ")))
+						;//go to search
+					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")))
+					{
+						char *buff1 = malloc(sizeof(char)*(strlen(buff)-strlen("/maxcount ")));
+						// buff+=strlen("/maxcount ");
+						int k = 0;
+						for (y=strlen("/maxcount ");y<strlen(buff);y++)
+						{
+							if (buff[y] == ' ' || buff[y] == '\0')
+								break;
+
+							buff1[k] = buff[y];
+							k++;
+						}
+						buff1[k] = '\0';
+						printf("BUFF is %s\n", buff1);
+						char *docname;
+						int number;
+						
+						// for (y=0;y<num_of_paths;y++)
+						// {
+
+							find_word(&trie, buff1,docname,&number);
+							// if (y==0)
+							// 	choose = 0;
+							// else
+							// {
+							// 	if (number[y] > number[choose])
+							// 		choose = y;
+							// }
+
+						// }
+						free(buff1);
+						printf("Chose doc is %s with %d\n", docname,number);
+
+					}
+					else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
+						;// go
+					else if (!strncmp(buff, "/wc ", strlen("/wc ")))
+						;// go
+
+					
 					free(buff);
 				}
 				else

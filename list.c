@@ -76,8 +76,6 @@ void fill_trie(listNode **head,trieNode_t **root)
 	}
 }
 
-
-
 void print(listNode **head)
 {
 	listNode *cur = *head;

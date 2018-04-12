@@ -20,7 +20,7 @@ void CreateTrie(trieNode_t **);
 trieNode_t * CreateTrieNode(char);
 void AddNode(trieNode_t **,char*,int,char*,int);
 void printNode(trieNode_t **,char *);
-// listNode *find_word(trieNode_t **,char *);
+void find_word(trieNode_t **,char *,char *,int*);
 // void df(trieNode_t **);
 void FreeTrie(trieNode_t **);
 
