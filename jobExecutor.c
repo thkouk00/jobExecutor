@@ -18,19 +18,20 @@
 #define FIFO2 "/home/thanos/Desktop/fifo2"
 #define PERMS 0666
 
+static volatile sig_atomic_t stop = 0;
 
 void Usage(char *prog_name)			/* Usage */
 {
    fprintf(stderr, "Usage: %s -d <docfile> -w <number of workers>\n", prog_name);
 } 
 
-void catchchild(int signo)
+void catchsig(int signo)
 {
-	pid_t pid ;
-	int status;
-	
-	printf("Catching: signo=%d and pid %d\n",signo,pid);
-	printf("Catching: returning\n");
+	if (signo == SIGUSR2)
+	{
+		stop = 1;
+		write(1, "Stop value changed", sizeof(char)*strlen("**Stop value changed"));
+	}
 }
 
 char *paths_to_pid; //keep track of paths , every cell has a pid
@@ -81,23 +82,9 @@ int main(int argc , char* argv[])
 		if (buff[strlen(buff)-1] == '\n')		//axreiasto edw logika
 			buff[strlen(buff)-1] = '\0';
 
-		// strncpy(buff, buff, strlen(buff));
-		// printf("%s.\n", buff);
-		// dp = opendir(buff);
-		// if (dp == NULL)
-		// 	fprintf(stderr, "ERROR\n");
-		// while ((entry = readdir(dp)) != NULL)
-		// {
-		// 	if (!strcmp(entry->d_name,".") || !strcmp(entry->d_name,".."))
-		// 		continue;
-		// 	printf("%s\n", entry->d_name);
-		// 	file_count++;
-		// }
-		// closedir(dp);
 		free(buff);
 		buff = NULL;
 		buff_size = 0;
-		// printf("COunt %d\n", file_count);
 		file_count = 0;
 		lines++;
 	};
@@ -117,22 +104,25 @@ int main(int argc , char* argv[])
 	printf("dirs_per_worker %d and workers %d\n",dirs_per_worker,W);
 	// fclose(fp);
 
-	// static struct sigaction act;
-	// act.sa_handler = catchchild;
-	// // act.sa_handler = SIG_IGN;
-	// sigfillset(&(act.sa_mask));
-	// sigaction(SIGCHLD,&act,NULL);
+	static struct sigaction act;
+	act.sa_handler = catchsig;
+	// act.sa_handler = SIG_IGN;
+	sigfillset(&(act.sa_mask));
+	sigaction(SIGUSR1,&act,NULL);				//signal handler for SIGUSR1
+	sigaction(SIGUSR2,&act,NULL);				//signal handler for SIGUSR2
 
 	int *pid_ar = malloc(sizeof(int)*W);
 	int n = 0;
 
+	char **name = malloc(sizeof(char*)*W);		//space to hold named pipes for every worker
+	for (i=0;i<W;i++)						
+		name[i] = malloc(sizeof(char)*(strlen(FIFO)+10));
 	
 
-	// create two named piped for communication between parent-child
+	// create named piped for communication between parent-child
 	if ((mkfifo(FIFO1,PERMS) < 0))				// read : parent <--> write : child
 		perror("PARENT cant create FIFO1\n");
-	// if ((mkfifo(FIFO2,PERMS) < 0))				// read : child <--> write : parent
-	// 	perror("PARENT cant create FIFO2\n");
+	
 
 	int readfd , writefd , status;
 	for (i=0;i<W;i++)
@@ -230,7 +220,37 @@ int main(int argc , char* argv[])
 
 			}
 
-
+			int size_to_read;
+			tmp_buff = malloc(sizeof(char)*20); 	//buffer to hold number sent from parent
+			
+			//worker must wait for message from jobExecutor for queries
+			while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
+			while(!stop)			//wait for SIGUSR2 to exit loop
+			{
+				pause(); 			//wait for SIGUSR1 to wake up and continue execution 
+				
+				// read query from jobExecutor
+				while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
+				size_to_read = atoi(tmp_buff);
+				if (size_to_read != -1)
+				{
+					buff = malloc(sizeof(char)*(size_to_read+1));
+					while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
+					printf("TOOK %s\n", buff);
+					printf("STOP is %d\n", stop);
+					printf("AFTER PAUSE %d\n", getpid());
+					// close(readfd);
+					free(buff);
+				}
+				else
+				{
+					close(readfd);
+					break;
+				}
+			};
+			printf("OUT of loop %d\n", getpid());
+			// close(readfd);
+			//kill(getpid(),SIGUSR1);
 			for (y=0;y<num_of_paths;y++)
 				free(path_array[y]);
 			free(path_array);
@@ -242,23 +262,84 @@ int main(int argc , char* argv[])
 		else
 		{	
 			//send paths to workers
-			send_msg(&fp, max_chars,pid_ar[i],&modulo, &temp_lines,&dirs_per_worker,&tmp_mod);
-			
+
+			send_msg(&fp,name[i],max_chars,pid_ar[i],&modulo, &temp_lines,&dirs_per_worker,&tmp_mod);
 		}
 	}
 
-	printf("GIVE INPUT\n");
-	while ((x=getline(&buff,&buff_size,stdin))<=0);
-	printf("INPUT\n");
-	printf("%s\n", buff);
+
+	int *writefd_array = malloc(sizeof(int)*W);
+	// for (int j=0;j<W;j++)	
+	// {
+	// 	while ((writefd_array[j] = open(name[j],O_WRONLY|O_NONBLOCK))<0);
+	// 	printf("WRITEFD[%d] %d\n",j,writefd_array[j]);
+	// }
+	char *tmp_buff = malloc(sizeof(char)*20);		//buffer to hold number of chars to sent to child
+	// parent process
+	while(1)
+	{
+		printf("Give input:\n");
+		while ((x=getline(&buff,&buff_size,stdin))<=0);
+		char delimiter[] = " \t\n";
+		char *temp = malloc(sizeof(char)*(strlen(buff)+1));
+		strncpy(temp, buff,strlen(buff));
+		char *txt = strtok(temp,delimiter);
+		int valid = 0;
+		int exit_flag = 0;
+		// printf("buff %s\ntemp %s\n", buff,temp);
+		if (!strncmp(txt, "/search", strlen("/search")+1))
+			valid = 1;
+		else if (!strncmp(txt, "/maxcount", strlen("/maxcount")+1))
+			valid = 1;
+		else if (!strncmp(txt, "/mincount", strlen("/mincount")+1))
+			valid = 1;
+		else if (!strncmp(txt, "/wc", strlen("/wc")+1))
+			valid = 1;
+		else if (!strncmp(txt, "/exit", strlen("/exit")+1))
+		{
+			printf("Exiting\n");
+			for (int j=0;j<W;j++)
+			{	
+				kill(pid_ar[j],SIGUSR1);
+				printf("SIGUSR2 %d\n",pid_ar[j]);
+				write(writefd_array[j], "-1", sizeof(char)*20);
+				close(writefd_array[j]);
+			}
+			break;
+		}
+		else
+			printf("Wrong input try again\n");
+		if (valid)
+		{
+			sprintf(tmp_buff, "%ld",strlen(buff));
+			printf("tmp_buff is %s\n", tmp_buff);
+			for (int j=0;j<W;j++)
+			{	
+				kill(pid_ar[j],SIGUSR1);
+				printf("SIGUSR1 %d\n",pid_ar[j]);
+				while ((writefd_array[j] = open(name[j],O_WRONLY|O_NONBLOCK))<0);
+				write(writefd_array[j], tmp_buff, sizeof(char)*20);		//inform child how many chars to expect
+				write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
+				// close(writefd);
+
+			}
+		}
+		free(temp);
+		free(buff);
+		buff = NULL;
+		
+	};
 
 	//end of program
 	pid_t pid;
 	for (i=0;i<W;i++)
 	{
 		pid = waitpid((pid_t)(-1),&status, 0) ;
+		unlink(name[i]);
+		free(name[i]);
 		printf("Waited for %d\n",pid);
 	}
+	free(name);
 	unlink(FIFO1);
 	// unlink(FIFO2);
 	fclose(fp);

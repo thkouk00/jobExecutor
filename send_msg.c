@@ -1,12 +1,11 @@
 #include "send_msg.h"
 
-void send_msg(FILE **fp,int max_chars ,int pid , int *modulo , int *temp_lines , int *dirs_per_worker , int *tmp_mod)
+void send_msg(FILE **fp,char *name,int max_chars ,int pid , int *modulo , int *temp_lines , int *dirs_per_worker , int *tmp_mod)
 {
 	int writefd , num_of_paths;
 	int y;
 	char *buff = NULL;
 	size_t buff_size =0;
-	char *name = malloc(sizeof(char)*(strlen(FIFO)+10));
 	sprintf(name, "%s%d", FIFO,pid);
 	if (*modulo)									//split work equally
 	{
@@ -36,6 +35,6 @@ void send_msg(FILE **fp,int max_chars ,int pid , int *modulo , int *temp_lines ,
 	}
 	close(writefd);
 	// printf("Just finish sending paths temp_lines %d\n",*temp_lines);
-	unlink(name);
-	free(name);
+	// unlink(name);
+	// free(name);
 }

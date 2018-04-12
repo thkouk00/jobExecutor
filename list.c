@@ -134,17 +134,26 @@ void insert_lineInfo(line_info **head,int line, long offset)
 		(*head)->next = NULL;
 	}
 
+	int flag = 0;
 	line_info *cur = *head;
 	while (cur->next)					// insert new node at end of list
 	{
 		cur = cur->next;
+		if (cur->line == line && cur->offset == offset)		//same word in same line
+		{
+			flag = 1;
+			break;
+		}
 		// printf("Line %d - ofs %ld\n",cur->line,cur->offset);
 	}
-	line_info *n = (line_info*)malloc(sizeof(struct Line_info));
-	n->line = line;
-	n->offset = offset;
-	n->next = NULL;
-	cur->next = n;
+	if (!flag)
+	{
+		line_info *n = (line_info*)malloc(sizeof(struct Line_info));
+		n->line = line;
+		n->offset = offset;
+		n->next = NULL;
+		cur->next = n;
+	}
 	// printf("AND line %d - ofs %ld\n", n->line,n->offset);
 }
 

@@ -15,7 +15,6 @@ typedef struct list 		//for posting list
 	int lines;
 	int *offset_array;
 	int max_chars;
-	//mia domi trie kai mia domi map
 	struct list *next;
 }listNode;
 
