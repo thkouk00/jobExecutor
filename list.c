@@ -200,7 +200,6 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 	while (cur->next)
 	{
 		cur = cur->next;
-		printf("NN %s\n", cur->name);
 		if (!strcmp(cur->name, name))
 		{
 			// printf("YPARXEI PLIST %s\n",cur->name);

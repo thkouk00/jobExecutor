@@ -115,8 +115,12 @@ int main(int argc , char* argv[])
 	int n = 0;
 
 	char **name = malloc(sizeof(char*)*W);		//space to hold named pipes for every worker
-	for (i=0;i<W;i++)						
+	char **name2 = malloc(sizeof(char*)*W);		//space to hold named pipes for every worker
+	for (i=0;i<W;i++)
+	{						
 		name[i] = malloc(sizeof(char)*(strlen(FIFO)+10));
+		name2[i] = malloc(sizeof(char)*(strlen(FIFO)+12));
+	}
 	
 
 	// create named piped for communication between parent-child
@@ -130,11 +134,16 @@ int main(int argc , char* argv[])
 		pid_ar[i] = fork();
 		if (!pid_ar[i])					// child process 
 		{
-			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));
+			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));		//for reading
 			sprintf(name, "%s%d", FIFO,getpid());
-			
+
+			char *name2 = malloc(sizeof(char)*(strlen(FIFO)+12));		//for writing
+			sprintf(name2, "%s_2", name);
+
 			int num_of_paths;
 			if ((mkfifo(name, PERMS)<0))
+				perror("Error : creating FIFO\n");
+			if ((mkfifo(name2, PERMS)<0))
 				perror("Error : creating FIFO\n");
 			
 			while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
@@ -238,38 +247,35 @@ int main(int argc , char* argv[])
 					while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
 					if (!strncmp(buff, "/search ", strlen("/search ")))
 						;//go to search
-					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")))
+					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
 					{
+						int flag;
 						char *word;
 						char *buff1 = buff ;//= malloc(sizeof(char)*(strlen(buff)-strlen("/maxcount ")));
 						word = strtok(buff1," \n\0");
+						if (!strcmp("/maxcount",word))
+							flag = 0;
+						else
+							flag = 1;
 						word = strtok(NULL," \n\0");
 						
-						// buff+=strlen("/maxcount ");
-						int k = 0;
-						// for (y=strlen("/maxcount ");y<strlen(buff);y++)
-						// {
-						// 	if (buff[y] == ' ' || buff[y] == '\0')
-						// 		break;
-
-						// 	buff1[k] = buff[y];
-						// 	k++;
-						// }
-						// buff1[k] = '\0';
 						printf("BUFF1 is %s\n", word);
-						char *docname;
+						char *docname = NULL;
 						int number;
-				
-						find_word(&trie, word,&docname,&number);
-						// free(buff1);
 						
+						find_word(&trie, word,&docname,&number,flag);
+						// while (( = open(name,O_WRONLY|O_NONBLOCK))<0);
+						if (!docname)
+							num_of_paths = 0;
 						printf("Chose doc is %s with %d\n", docname,number);
 						//return it to jobExecutor
-						// free(docname);
-
+						if (docname)
+							free(docname);
 					}
-					else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
-						;// go
+					// else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
+					// {
+					// 	find_word(&trie, word,&docname,&number,1);
+					// }
 					else if (!strncmp(buff, "/wc ", strlen("/wc ")))
 						;// go
 
@@ -297,18 +303,15 @@ int main(int argc , char* argv[])
 		{	
 			//send paths to workers
 
-			send_msg(&fp,name[i],max_chars,pid_ar[i],&modulo, &temp_lines,&dirs_per_worker,&tmp_mod);
+			send_msg(&fp,name[i],name2[i],max_chars,pid_ar[i],&modulo, &temp_lines,&dirs_per_worker,&tmp_mod);
 		}
 	}
 
 
-	int *writefd_array = malloc(sizeof(int)*W);
-	// for (int j=0;j<W;j++)	
-	// {
-	// 	while ((writefd_array[j] = open(name[j],O_WRONLY|O_NONBLOCK))<0);
-	// 	printf("WRITEFD[%d] %d\n",j,writefd_array[j]);
-	// }
+	
 
+	int *writefd_array = malloc(sizeof(int)*W);
+	int *readfd_array = malloc(sizeof(int)*W);
 	char *tmp_buff = malloc(sizeof(char)*20);		//buffer to hold number of chars to sent to child
 	// parent process
 	while(1)
@@ -325,11 +328,11 @@ int main(int argc , char* argv[])
 		if (!strncmp(txt, "/search", strlen("/search")+1))
 			valid = 1;
 		else if (!strncmp(txt, "/maxcount", strlen("/maxcount")+1))
-			valid = 1;
+			valid = 2;
 		else if (!strncmp(txt, "/mincount", strlen("/mincount")+1))
-			valid = 1;
+			valid = 3;
 		else if (!strncmp(txt, "/wc", strlen("/wc")+1))
-			valid = 1;
+			valid = 4;
 		else if (!strncmp(txt, "/exit", strlen("/exit")+1))
 		{
 			printf("Exiting\n");
@@ -338,7 +341,9 @@ int main(int argc , char* argv[])
 				kill(pid_ar[j],SIGUSR1);
 				printf("SIGUSR2 %d\n",pid_ar[j]);
 				write(writefd_array[j], "-1", sizeof(char)*20);
+				// write(writefd, "-1", sizeof(char)*20);
 				close(writefd_array[j]);
+				// close(writefd);
 			}
 			break;
 		}
@@ -355,8 +360,20 @@ int main(int argc , char* argv[])
 				while ((writefd_array[j] = open(name[j],O_WRONLY|O_NONBLOCK))<0);
 				write(writefd_array[j], tmp_buff, sizeof(char)*20);		//inform child how many chars to expect
 				write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
-				// close(writefd);
-
+				
+				// while ((readfd_array[j] = open(name2[j], O_RDONLY|O_NONBLOCK))<0);
+				// while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+				// int length = atoi(tmp_buff);
+				// if (valid == 1)
+				// 	;
+				// else if (valid == 2)
+				// {
+				// 	while ((n=read(readfd_array[j],ff, sizeof(char)*length))<=0);
+				// }
+				// else if (valid == 3)
+				// 	;
+				// else if (valid == 4)
+				// 	;
 			}
 		}
 		free(temp);

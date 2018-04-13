@@ -1,12 +1,13 @@
 #include "send_msg.h"
 
-void send_msg(FILE **fp,char *name,int max_chars ,int pid , int *modulo , int *temp_lines , int *dirs_per_worker , int *tmp_mod)
+void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid , int *modulo , int *temp_lines , int *dirs_per_worker , int *tmp_mod)
 {
 	int writefd , num_of_paths;
 	int y;
 	char *buff = NULL;
 	size_t buff_size =0;
 	sprintf(name, "%s%d", FIFO,pid);
+	sprintf(name2, "%s_2",name);
 	if (*modulo)									//split work equally
 	{
 		if (*temp_lines>=*dirs_per_worker && *tmp_mod>0)

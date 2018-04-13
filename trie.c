@@ -15,7 +15,6 @@ trieNode_t * CreateTrieNode(char key)		//initialize root
 		fprintf(stderr,"Malloc failed\n");
 		return node;
 	}
-	printf("key is %c\n", key);
 	node->key = key;
 	// printf("NODE KEY is %c\n", node->key);
 	node->children = NULL;
@@ -85,7 +84,7 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 	
 	tempNode->endofword = 1;
 	trie_list *cur = tempNode->plist;
-	printf("KEY %s^\n", tmpstr);
+	// printf("KEY %s^\n", tmpstr);
 	// printf("NAME IS %s\n", name);
 	// insert_to_plist(&(tempNode->plist), name, line_num, offset);
 	insert_to_plist(&(tempNode->plist), name, line_num, offset);
@@ -160,7 +159,7 @@ void printNode(trieNode_t **root,char *key)
 		while (l->next)
 		{
 			l = l->next;
-			printf("NAME is %s and %d\n",l->name,l->number_of_times);
+			// printf("NAME is %s and %d\n",l->name,l->number_of_times);
 		}
 	}
 	else
@@ -175,7 +174,7 @@ void printNode(trieNode_t **root,char *key)
 	free(buffer);
 }
 ///////////////////////////////////
-void find_word(trieNode_t **root,char *key,char **name,int *number)
+void find_word(trieNode_t **root,char *key,char **name,int *number,int min_enabled)
 {
 	int found = 0 , finish = 1, flag = 0;
 	char *str = key;
@@ -246,30 +245,53 @@ void find_word(trieNode_t **root,char *key,char **name,int *number)
 	if (!strncmp(buffer, str,strlen(str)) && tempNode->endofword)
 	{
 		finish = 1;
-		printf("HEREE\n");
+		
 		// free(buffer);
-		int count = 0;
-		char *name1;
-		trie_list *cur = tempNode->plist;
-		while (cur->next)
+		if (min_enabled)
 		{
-			cur = cur->next;
-			printf("***%s %d\n", cur->name,cur->number_of_times);
-			if (cur->number_of_times > count)
+			//for min
+			int count = 999999999;
+			char *name1;
+			trie_list *cur = tempNode->plist;
+			while (cur->next)
 			{
-				count = cur->number_of_times;
-				name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
-				strcpy(name1, cur->name);
+				cur = cur->next;
+				printf("***%s %d\n", cur->name,cur->number_of_times);
+				if (cur->number_of_times > 0 && cur->number_of_times < count)
+				{
+					count = cur->number_of_times;
+					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
+					strcpy(name1, cur->name);
+				}
 			}
+			
+			*number = count;
+			*name = malloc(sizeof(char)*(strlen(name1)+1));
+			strcpy(*name, name1);
+			printf("NAME %s and num %d\n", *name,*number);
 		}
-		printf("LALALA %s\n",name1);
-		*number = count;
-		*name = malloc(sizeof(char)*(strlen(name1)+1));
-		strcpy(*name, name1);
-		printf("NAME %s and num %d\n", *name,*number);
-		// return name;
-			// tempNode->plist;	//h lista
-			// return name tempNode->plist; 		// trav
+		else
+		{
+			int count = 0;
+			char *name1;
+			trie_list *cur = tempNode->plist;
+			while (cur->next)
+			{
+				cur = cur->next;
+				printf("***%s %d\n", cur->name,cur->number_of_times);
+				if (cur->number_of_times > count)
+				{
+					count = cur->number_of_times;
+					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
+					strcpy(name1, cur->name);
+				}
+			}
+			
+			*number = count;
+			*name = malloc(sizeof(char)*(strlen(name1)+1));
+			strcpy(*name, name1);
+			printf("NAME %s and num %d\n", *name,*number);
+		}
 	}
 	else
 	{
