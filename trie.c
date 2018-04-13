@@ -178,12 +178,12 @@ void printNode(trieNode_t **root,char *key)
 void find_word(trieNode_t **root,char *key,char **name,int *number)
 {
 	int found = 0 , finish = 1, flag = 0;
-	char *str ;//= key;
-	str = malloc(sizeof(key));
-	strcpy(str, key);
-	if (str[strlen(str)-1] == '\n')
-		str[strlen(str)-1] = '\0';
-	printf("STR %s^\n", str);
+	char *str = key;
+	// str = malloc(sizeof(key));
+	// strcpy(str, key);
+	// if (str[strlen(str)-1] == '\n')
+	// 	str[strlen(str)-1] = '\0';
+	// printf("STR %s^\n", str);
 	// str[strlen(key)] = '\0';
 	char *str1 ;
 	char *buffer = malloc(sizeof(char)*(strlen(str)+1));
