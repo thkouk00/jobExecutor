@@ -53,7 +53,6 @@ void fill_trie(listNode **head,trieNode_t **root)
 		{
 			cur = cur->next; 
 			str = malloc(sizeof(char)*(cur->max_chars+1));
-			
 			// printf("NAME:%s\n",cur->name);
 			for (int i =0;i<cur->lines;i++)
 			{
@@ -195,13 +194,16 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 		// printf("GOT %p \n",*head);
 	}
 	trie_list *cur = *head;
+	trie_list *cur1 = *head;
 	int flag = 0;
+
 	while (cur->next)
 	{
 		cur = cur->next;
+		printf("NN %s\n", cur->name);
 		if (!strcmp(cur->name, name))
 		{
-			// printf("YPARXEI PLIST\n");
+			// printf("YPARXEI PLIST %s\n",cur->name);
 			flag = 1;
 			cur->number_of_times++;
 			insert_lineInfo(&(cur->linfo), line, offset);
@@ -210,17 +212,21 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 	}
 	if (!flag)
 	{
+		// printf("->%s\n",name);
 		trie_list *temp = (trie_list*)malloc(sizeof(struct Trie_list));
-		temp->name = malloc(sizeof(char)*(strlen(name)+2));
-		strncpy(temp->name,name,strlen(name)+1);
+		temp->name = malloc(sizeof(char)*(strlen(name)));
+		strncpy(temp->name,name,strlen(name));
+		temp->name[strlen(name)] = '\0';
 		// printf("PLIST %s\n", temp->name);
 		temp->linfo = NULL;
 		// printf("NAMEinPLIST %s\n", temp->name);
 		// temp->path_num = path_num;
 		temp->number_of_times = 1;
 		insert_lineInfo(&(temp->linfo), line, offset);
-		temp->next = NULL;
-		cur->next = temp;
+		temp->next = cur1->next;
+		cur1->next = temp;
+
+
 	}
 
 }

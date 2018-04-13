@@ -14,6 +14,7 @@ void map_file(FILE *file,listNode **info,char *filename)
 			break;
 		}
 	}
+	printf("MAPPING %s\n", cur->name);
 	char *buff = malloc(sizeof(char)*(cur->max_chars+1));
 	// printf("MAX IS %d and lines %d\n", cur->max_chars,cur->lines);
 	for (i=0;i<cur->lines;i++)

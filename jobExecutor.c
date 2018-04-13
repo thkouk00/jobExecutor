@@ -216,7 +216,7 @@ int main(int argc , char* argv[])
 				//eisagogi sto trie
 				fill_trie(&info[y], &trie);
 				// printNode(&trie, "syspro");
-				// printNode(&trie, "Theatre,");
+				printNode(&trie, "to");
 
 			}
 
@@ -240,37 +240,32 @@ int main(int argc , char* argv[])
 						;//go to search
 					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")))
 					{
-						char *buff1 = malloc(sizeof(char)*(strlen(buff)-strlen("/maxcount ")));
+						char *word;
+						char *buff1 = buff ;//= malloc(sizeof(char)*(strlen(buff)-strlen("/maxcount ")));
+						word = strtok(buff1," \n\0");
+						word = strtok(NULL," \n\0");
+						
 						// buff+=strlen("/maxcount ");
 						int k = 0;
-						for (y=strlen("/maxcount ");y<strlen(buff);y++)
-						{
-							if (buff[y] == ' ' || buff[y] == '\0')
-								break;
+						// for (y=strlen("/maxcount ");y<strlen(buff);y++)
+						// {
+						// 	if (buff[y] == ' ' || buff[y] == '\0')
+						// 		break;
 
-							buff1[k] = buff[y];
-							k++;
-						}
-						buff1[k] = '\0';
-						printf("BUFF is %s\n", buff1);
+						// 	buff1[k] = buff[y];
+						// 	k++;
+						// }
+						// buff1[k] = '\0';
+						printf("BUFF1 is %s\n", word);
 						char *docname;
 						int number;
+				
+						find_word(&trie, word,&docname,&number);
+						// free(buff1);
 						
-						// for (y=0;y<num_of_paths;y++)
-						// {
-
-							find_word(&trie, buff1,docname,&number);
-							// if (y==0)
-							// 	choose = 0;
-							// else
-							// {
-							// 	if (number[y] > number[choose])
-							// 		choose = y;
-							// }
-
-						// }
-						free(buff1);
 						printf("Chose doc is %s with %d\n", docname,number);
+						//return it to jobExecutor
+						// free(docname);
 
 					}
 					else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
@@ -313,6 +308,7 @@ int main(int argc , char* argv[])
 	// 	while ((writefd_array[j] = open(name[j],O_WRONLY|O_NONBLOCK))<0);
 	// 	printf("WRITEFD[%d] %d\n",j,writefd_array[j]);
 	// }
+
 	char *tmp_buff = malloc(sizeof(char)*20);		//buffer to hold number of chars to sent to child
 	// parent process
 	while(1)

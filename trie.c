@@ -15,7 +15,7 @@ trieNode_t * CreateTrieNode(char key)		//initialize root
 		fprintf(stderr,"Malloc failed\n");
 		return node;
 	}
-
+	printf("key is %c\n", key);
 	node->key = key;
 	// printf("NODE KEY is %c\n", node->key);
 	node->children = NULL;
@@ -85,8 +85,11 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 	
 	tempNode->endofword = 1;
 	trie_list *cur = tempNode->plist;
-	// printf("NAME IS %s and offset is %d and line %d\n", name,offset,line_num);
+	printf("KEY %s^\n", tmpstr);
+	// printf("NAME IS %s\n", name);
+	// insert_to_plist(&(tempNode->plist), name, line_num, offset);
 	insert_to_plist(&(tempNode->plist), name, line_num, offset);
+	
 	// listNode *cur = tempNode->plist;
 	// insert(&(tempNode->plist),id,tmpstr);		// posting list for word
 }
@@ -153,11 +156,12 @@ void printNode(trieNode_t **root,char *key)
 	if (!strncmp(buffer, str,strlen(str)) && tempNode->endofword)
 	{
 		finish = 1;
-		// listNode *l = tempNode->plist;
-		// if (l != NULL)
-		// {
-		// 	printf("NAME is %s\n",l->name);
-		// }
+		trie_list *l = tempNode->plist;
+		while (l->next)
+		{
+			l = l->next;
+			printf("NAME is %s and %d\n",l->name,l->number_of_times);
+		}
 	}
 	else
 	{
@@ -171,11 +175,16 @@ void printNode(trieNode_t **root,char *key)
 	free(buffer);
 }
 ///////////////////////////////////
-void find_word(trieNode_t **root,char *key,char *name,int *number)
+void find_word(trieNode_t **root,char *key,char **name,int *number)
 {
-	printf("KEY %s\n", key);
 	int found = 0 , finish = 1, flag = 0;
-	char *str = key;
+	char *str ;//= key;
+	str = malloc(sizeof(key));
+	strcpy(str, key);
+	if (str[strlen(str)-1] == '\n')
+		str[strlen(str)-1] = '\0';
+	printf("STR %s^\n", str);
+	// str[strlen(key)] = '\0';
 	char *str1 ;
 	char *buffer = malloc(sizeof(char)*(strlen(str)+1));
 	if (buffer == NULL)
@@ -230,8 +239,8 @@ void find_word(trieNode_t **root,char *key,char *name,int *number)
 
 	}
 	buffer[i] = '\0'; 	
-	if (str[strlen(str)-1] == '\n')
-		str[strlen(str)-1] = '\0';
+	// if (str[strlen(str)-1] == '\n')
+		// str[strlen(str)] = '\0';
 	
 	printf("BUFFER %s\nSTR %s and %d\n", buffer,str,tempNode->endofword);
 	if (!strncmp(buffer, str,strlen(str)) && tempNode->endofword)
@@ -245,17 +254,19 @@ void find_word(trieNode_t **root,char *key,char *name,int *number)
 		while (cur->next)
 		{
 			cur = cur->next;
-			printf("***%s\n", cur->name);
+			printf("***%s %d\n", cur->name,cur->number_of_times);
 			if (cur->number_of_times > count)
 			{
 				count = cur->number_of_times;
 				name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
-				strcpy(name, cur->name);
+				strcpy(name1, cur->name);
 			}
 		}
+		printf("LALALA %s\n",name1);
 		*number = count;
-		name = malloc(sizeof(char)*(strlen(name1)+1));
-		printf("NAME %s and num %d\n", name,*number);
+		*name = malloc(sizeof(char)*(strlen(name1)+1));
+		strcpy(*name, name1);
+		printf("NAME %s and num %d\n", *name,*number);
 		// return name;
 			// tempNode->plist;	//h lista
 			// return name tempNode->plist; 		// trav
