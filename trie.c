@@ -257,6 +257,7 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int min_enabl
 			{
 				cur = cur->next;
 				printf("***%s %d\n", cur->name,cur->number_of_times);
+				//check for >0 no needed i guess
 				if (cur->number_of_times > 0 && cur->number_of_times < count)
 				{
 					count = cur->number_of_times;
