@@ -13,6 +13,7 @@
 #include "map_file.h"
 #include "trie.h"
 #include "set_up_worker.h"
+#include "maxcount.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
 #define FIFO1 "/home/thanos/Desktop/fifo1"
@@ -172,9 +173,8 @@ int main(int argc , char* argv[])
 			int *offset_array ;
 			for (y=0;y<num_of_paths;y++)
 			{
-				set_up_worker(&info[y],path_array[y]);
-				//eisagogi sto trie
-				fill_trie(&info[y], &trie);
+				set_up_worker(&info[y],path_array[y]);			//takes docfiles and map them
+				fill_trie(&info[y], &trie);						//insert to trie
 				printNode(&trie, "syspro");
 				printNode(&trie, "to");
 
@@ -185,83 +185,39 @@ int main(int argc , char* argv[])
 			
 			//worker must wait for message from jobExecutor for queries
 			
-			// while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
+			while ((writefd = open(name2, O_WRONLY|O_NONBLOCK))<0);
 			while(!stop)			//wait for SIGUSR2 to exit loop
 			{
 				pause(); 			//wait for SIGUSR1 to wake up and continue execution 
-				printf("I am here\n");
-			// 	// read query from jobExecutor
+				
+				// read query from jobExecutor
 				while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
 				size_to_read = atoi(tmp_buff);
-				// if (size_to_read != -1)
-				// {
-			// 		buff = malloc(sizeof(char)*(size_to_read+1));
-			// 		while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
-			// 		if (!strncmp(buff, "/search ", strlen("/search ")))
-			// 			;//go to search
-			// 		else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
-			// 		{
-			// 			int flag;
-			// 			char *word;
-			// 			char *buff1 = buff ;//= malloc(sizeof(char)*(strlen(buff)-strlen("/maxcount ")));
-			// 			word = strtok(buff1," \n\0");
-			// 			if (!strcmp("/maxcount",word))
-			// 				flag = 0;
-			// 			else
-			// 				flag = 1;
-			// 			word = strtok(NULL," \n\0");
-						
-			// 			printf("BUFF1 is %s\n", word);
-			// 			char *docname = NULL;
-			// 			int number;
-						
-			// 			find_word(&trie, word,&docname,&number,flag);
-			// 			// while (( = open(name,O_WRONLY|O_NONBLOCK))<0);
-			// 			if (!docname)
-			// 			{
-			// 				number = 0;
-			// 				buff1 = malloc(sizeof(char)*12);
-			// 				sprintf(buff1, "-1|%s","2");
-			// 				write(writefd, buff1, sizeof(char)*20);
-			// 				free(buff1);
-			// 			}
-			// 			else
-			// 			{
-			// 				printf("Chose doc is %s with %d\n", docname,number);
-			// 				//return it to jobExecutor
-			// 				buff1 = malloc(sizeof(char)*12);
-			// 				//na dw meta gia to "2" giati tha pianei kai to mincount
-			// 				sprintf(buff1, "%ld|%s",sizeof(char)*(strlen(docname)+10),"2");
-
-			// 				printf("BUFF1 %s\n", buff1);
-			// 				while ((writefd = open(name2,O_WRONLY|O_NONBLOCK))<0);
-			// 				write(writefd, buff1, sizeof(char)*20);
-			// 				free(buff1);
-							
-			// 				buff1 = malloc(sizeof(char)*(strlen(docname)+10));
-			// 				sprintf(buff1, "%d|%s",number,docname);
-			// 				// write(writefd, buff1, sizeof(char)*strlen(buff1));
-			// 				write(writefd, buff1, sizeof(char)*(strlen(docname)+10));
-			// 				printf("WRITE %s\n", buff1);
-			// 				if (docname)
-			// 					free(docname);
-			// 				free(buff1);
-			// 			}
-			// 		}
-			// 		// else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
-			// 		// {
-			// 		// 	find_word(&trie, word,&docname,&number,1);
-			// 		// }
-			// 		else if (!strncmp(buff, "/wc ", strlen("/wc ")))
-			// 			;// go
+				if (size_to_read != -1)
+				{
+					buff = malloc(sizeof(char)*(size_to_read+1));
+					while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
+					if (!strncmp(buff, "/search ", strlen("/search ")))
+						;//go to search
+					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
+					{
+						maxcount(&trie,buff,name2,writefd);	
+					}
+					// else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
+					// {
+					// 	find_word(&trie, word,&docname,&number,1);
+					// }
+					else if (!strncmp(buff, "/wc ", strlen("/wc ")))
+						;// go
 
 					
-			// 		free(buff);
-			// 	}
-			// 	else
-				if (size_to_read == -1)
+					free(buff);
+				}
+				else
+				// if (size_to_read == -1)
 				{
 					close(readfd);
+					close(writefd);
 					break;
 				}
 			};
@@ -310,18 +266,14 @@ int main(int argc , char* argv[])
 		char *txt = strtok(temp,delimiter);
 		int valid = 0;
 		int exit_flag = 0;
-		int final_num = 0; 
+		int final_num; 					//used in max/mincount
 		// printf("buff %s\ntemp %s\n", buff,temp);
 		if (!strncmp(txt, "/search", strlen("/search")+1))
 			valid = 1;
 		else if (!strncmp(txt, "/maxcount", strlen("/maxcount")+1))
-		{
 			valid = 2;
-		}
 		else if (!strncmp(txt, "/mincount", strlen("/mincount")+1))
-		{
 			valid = 3;
-		}
 		else if (!strncmp(txt, "/wc", strlen("/wc")+1))
 			valid = 4;
 		else if (!strncmp(txt, "/exit", strlen("/exit")+1))
@@ -330,99 +282,108 @@ int main(int argc , char* argv[])
 			for (int j=0;j<W;j++)
 			{	
 				kill(pid_ar[j],SIGUSR1);
-				printf("SIGUSR2 %d\n",pid_ar[j]);
+				// printf("SIGUSR2 %d\n",pid_ar[j]);
+
+				//send -1 to stop child's loop
 				write(writefd_array[j], "-1", sizeof(char)*20);
-					// write(writefd, "-1", sizeof(char)*20);
 				close(writefd_array[j]);
-				// close(writefd);
 			}
 			break;
 		}
 		else
 			printf("Wrong input try again\n");
-		// if (valid)
-		// {
-		// 	sprintf(tmp_buff, "%ld",strlen(buff));
-		// 	printf("tmp_buff is %s\n", tmp_buff);
-		// 	txt = NULL;
-		// 	for (int j=0;j<W;j++)
-		// 	{	
-		// 		kill(pid_ar[j],SIGUSR1);
-		// 		printf("SIGUSR1 %d\n",pid_ar[j]);
-		// 		// while ((writefd_array[j] = open(name[j],O_WRONLY|O_NONBLOCK))<0);
-		// 		write(writefd_array[j], tmp_buff, sizeof(char)*20);		//inform child how many chars to expect
-		// 		write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
-		// 	}
-		// 	for (int j=0;j<W;j++)
-		// 	{
-		// 		printf("name->> %s\n", name2[j]);
-		// 		memset(tmp_buff, 0, sizeof(char)*20);
-		// 		printf("tmp_buff is %s\n", tmp_buff);
-		// 		// while ((readfd_array[j] = open(name2[j], O_RDONLY|O_NONBLOCK))<0);
-		// 		while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
-		// 		// while ((readfd = open(FIFO1, O_RDONLY|O_NONBLOCK))<0);
-		// 		// while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
-		// 		printf("EDWWW\n");
-		// 		char *word;
-		// 		word = strtok(tmp_buff," |\0\n");
-		// 		int length = atoi(word);
-		// 		word = strtok(NULL," |\0\n");
-		// 		valid = atoi(word);
-		// 		printf("VALID IS %d and length %d\n", valid,length);
-		// 		if (valid == 1)
-		// 			;
-		// 		else if (valid == 2)
-		// 		{
-		// 			if (length>0)
-		// 			{	
-		// 				int t_num = 0;
-						
-		// 				free(tmp_buff);
-		// 				tmp_buff = malloc(sizeof(char)*(length));
-		// 				while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*length))<=0);
-		// 				word = strtok(tmp_buff,"|\0\n");
-		// 				t_num = atoi(word);
-		// 				if (t_num > final_num)
-		// 				{
-		// 					final_num = t_num; 
-		// 					word = strtok(NULL,"|\0\n");
-		// 					if (txt!=NULL)
-		// 						free(txt);
-		// 					txt = malloc(sizeof(char)*(strlen(word)+1));
-		// 					strncpy(txt, word,strlen(word)+1);
-		// 				}
-		// 				else if (t_num == final_num)
-		// 				{
-		// 					if (strcmp(txt, word)<0)
-		// 					{
-		// 						free(txt);
-		// 						txt = malloc(sizeof(char)*(strlen(word)+1));
-		// 						strncpy(txt, word,strlen(word)+1);
-		// 					}
-		// 				}
+		if (valid)
+		{
+			sprintf(tmp_buff, "%ld",strlen(buff));
+			txt = NULL;
+			for (int j=0;j<W;j++)
+			{	
+				kill(pid_ar[j],SIGUSR1);
+				// printf("SIGUSR1 %d\n",pid_ar[j]);
+				
+				//inform child how many chars to expect
+				write(writefd_array[j], tmp_buff, sizeof(char)*20);		
+				//send query
+				write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
+			}
+			if (valid == 2)
+				final_num = 0;
+			else if (valid == 3)
+				final_num = 999999;
+			for (int j=0;j<W;j++)
+			{
+				memset(tmp_buff, 0, sizeof(char)*20);  //reset memory space
+				
+				while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
 
-		// 				free(tmp_buff);
-		// 				if (j == W-1)
-		// 				{
-		// 					if (txt!=NULL)
-		// 					{
-		// 						printf("Docfile is %s with %d times.\n", txt,final_num);
-		// 						free(txt);
-		// 					}
-		// 					else
-		// 						printf("No files found\n");
-		// 				}
+				char *word;
+				word = strtok(tmp_buff," |\0\n");
+				int length = atoi(word);			//mikos string poy perimenw
+				word = strtok(NULL," |\0\n");
+				valid = atoi(word);					//kodikos valid
+				// printf("VALID IS %d and length %d\n", valid,length);
+				// if (valid == 1)
+				// 	;
+				// else if (valid == 2)
+				if (valid == 2 || valid == 3)
+				{
+					if (length>0)
+					{	
+						int t_num = 0;
+						
+						char *temp_buff2 = malloc(sizeof(char)*(length));
+						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
+						word = strtok(temp_buff2,"|\0\n");
+						t_num = atoi(word);
+						if (valid == 2 && t_num > final_num)
+						{
+							final_num = t_num; 
+							word = strtok(NULL,"|\0\n");
+							if (txt!=NULL)
+								free(txt);
+							txt = malloc(sizeof(char)*(strlen(word)+1));
+							strncpy(txt, word,strlen(word)+1);
+						}
+						else if (valid == 3 && t_num < final_num)
+						{
+							final_num = t_num; 
+							word = strtok(NULL,"|\0\n");
+							if (txt!=NULL)
+								free(txt);
+							txt = malloc(sizeof(char)*(strlen(word)+1));
+							strncpy(txt, word,strlen(word)+1);
+						}
+						else if (t_num == final_num)
+						{
+							word = strtok(NULL,"|\0\n");
+							if (strcmp(txt, word)>0)
+							{
+								free(txt);
+								txt = malloc(sizeof(char)*(strlen(word)+1));
+								strncpy(txt, word,strlen(word)+1);
+							}
+						}
+						free(temp_buff2);
 					
-		// 			}
-		// 			else
-		// 				printf("Word not found\n");
-		// 		}
-		// 		else if (valid == 3)
-		// 			;
-		// 		else if (valid == 4)
-		// 			;
-		// 	}	
-		// }
+					}
+					
+					if (j == W-1)
+					{
+						if (txt!=NULL)
+						{
+							printf("Docfile is %s with %d times.\n", txt,final_num);
+							free(txt);
+						}
+						else
+							printf("No files found containing requested word.\n");
+					}
+				}
+				// else if (valid == 3)
+				// 	;
+				// else if (valid == 4)
+				// 	;
+			}	
+		}
 		free(temp);
 		free(buff);
 		buff = NULL;
@@ -436,6 +397,8 @@ int main(int argc , char* argv[])
 		pid = waitpid((pid_t)(-1),&status, 0) ;
 		unlink(name[i]);
 		free(name[i]);
+		unlink(name2[i]);
+		free(name2[i]);
 		printf("Waited for %d\n",pid);
 	}
 	free(name);

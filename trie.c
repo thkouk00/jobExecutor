@@ -178,12 +178,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int min_enabl
 {
 	int found = 0 , finish = 1, flag = 0;
 	char *str = key;
-	// str = malloc(sizeof(key));
-	// strcpy(str, key);
-	// if (str[strlen(str)-1] == '\n')
-	// 	str[strlen(str)-1] = '\0';
-	// printf("STR %s^\n", str);
-	// str[strlen(key)] = '\0';
 	char *str1 ;
 	char *buffer = malloc(sizeof(char)*(strlen(str)+1));
 	if (buffer == NULL)
@@ -238,188 +232,60 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int min_enabl
 
 	}
 	buffer[i] = '\0'; 	
-	// if (str[strlen(str)-1] == '\n')
-		// str[strlen(str)] = '\0';
 	
-	printf("BUFFER %s\nSTR %s and %d\n", buffer,str,tempNode->endofword);
-	if (!strncmp(buffer, str,strlen(str)) && tempNode->endofword)
+	if (!strncmp(buffer, str,strlen(str))) 
 	{
-		finish = 1;
-		
-		// free(buffer);
+		char *name1=NULL;
+		int count;
+		trie_list *cur = tempNode->plist;
+	
 		if (min_enabled)
 		{
-			//for min
-			int count = 999999999;
-			char *name1;
-			trie_list *cur = tempNode->plist;
+			//mincount
+			count = 999999999;		
 			while (cur->next)
 			{
 				cur = cur->next;
-				printf("***%s %d\n", cur->name,cur->number_of_times);
-				//check for >0 no needed i guess
-				if (cur->number_of_times > 0 && cur->number_of_times < count)
+				if (cur->number_of_times < count)
 				{
+					if (name1 != NULL)
+						free(name1);
 					count = cur->number_of_times;
 					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
 					strcpy(name1, cur->name);
 				}
 			}
-			
-			*number = count;
-			*name = malloc(sizeof(char)*(strlen(name1)+1));
-			strcpy(*name, name1);
-			printf("NAME %s and num %d\n", *name,*number);
 		}
 		else
 		{
-			int count = 0;
-			char *name1;
-			trie_list *cur = tempNode->plist;
+			count = 0;
 			while (cur->next)
 			{
 				cur = cur->next;
-				printf("***%s %d\n", cur->name,cur->number_of_times);
 				if (cur->number_of_times > count)
 				{
+					if (name1 != NULL)
+						free(name1);
 					count = cur->number_of_times;
 					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
 					strcpy(name1, cur->name);
 				}
 			}
-			
+		}
+		if (name1 != NULL)
+		{
 			*number = count;
 			*name = malloc(sizeof(char)*(strlen(name1)+1));
 			strcpy(*name, name1);
-			printf("NAME %s and num %d\n", *name,*number);
 		}
+		else
+			name = NULL;
 	}
-	else
-	{
-		finish = 0;
-		printf("%s not found\n",str);
-	}
-	if (finish)
-		printf("PRINT : %s\n",buffer);
-
-	// printf("%s\n",buffer);
 	free(buffer);
 }
 
 
-
-
 //////////////////////////////////
-// find word returns posting list for a given word if exists , else returns NULL
-// same implementation as printNode
-// char* find_word(trieNode_t **root,char *key,char *name,int *number)
-// {
-// 	printf("ZDAROVA\n");
-// 	int found = 0 , finish = 1 , flag = 0;
-// 	char *str = key;
-// 	char *str1 ;
-// 	char *buffer = malloc(sizeof(char)*(strlen(str)+1));
-// 	if (buffer == NULL)
-// 		printf("malloc error\n");
-
-// 	trieNode_t *tempNode = NULL;
-
-// 	if (*root == NULL)
-// 	{
-// 		fprintf(stderr, "Not initialized Trie!\n");
-// 		exit(1);
-// 	}
-	
-// 	tempNode = *root;
-// 	int i;
-// 	for (i=0;i<strlen(str);i++)					//compare child nodes or neighbors for given key
-// 	{
-// 		while (tempNode->children!=NULL)
-// 		{
-// 			tempNode = tempNode->children;
-// 			if (tempNode->key == *key)
-// 			{
-// 				buffer[i] = tempNode->key;
-// 				printf("%c\n", buffer[i]);
-// 				flag = 1;
-// 				break;
-// 			}
-// 			else
-// 			{
-// 				found = 0;
-// 				while (tempNode->neighbor != NULL)
-// 				{
-// 					tempNode = tempNode->neighbor;
-// 					if (tempNode->key == *key)
-// 					{
-// 						buffer[i] = tempNode->key;
-// 						printf("%c\n", buffer[i]);
-// 						flag = 1;
-// 						found = 1;
-// 						break;
-// 					}
-// 				}
-// 				if (!flag)
-// 					break;
-// 				if (found)
-// 					break;
-// 			}
-// 		}
-// 		if (!flag)
-// 		{
-// 			finish = 0;
-// 			break;
-// 		}
-// 		flag = 0;
-// 		key++;
-// 	}
-// 	buffer[i] = '\0'; 	
-// 	printf("____%s\n", buffer);
-// 	if (!flag && !finish)
-// 	{
-// 		printf("EDW\n");
-// 		return NULL;
-// 	}
-// 	if (!strcmp(buffer, str) && tempNode->endofword)
-// 	{
-// 		if (tempNode->plist == NULL)
-// 		{
-// 			free(buffer);
-// 			return NULL;
-// 		}
-// 		else
-// 		{
-// 			printf("HEREE\n");
-// 			free(buffer);
-// 			int count = 0;
-// 			char *name1;
-// 			trie_list *cur = tempNode->plist;
-// 			while (cur->next)
-// 			{
-// 				cur = cur->next;
-// 				if (cur->number_of_times > count)
-// 				{
-// 					count = cur->number_of_times;
-// 					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
-// 					strcpy(name, cur->name);
-// 				}
-// 			}
-// 			*number = count;
-// 			name = malloc(sizeof(char)*(strlen(name1)+1));
-// 			printf("NAME %s and num %d\n", name,*number);
-// 			return name;
-// 			// tempNode->plist;	//h lista
-// 			// return name tempNode->plist; 		// traverse list and find the doc
-// 		}
-// 	}
-// 	else
-// 	{
-// 		finish = 0;
-// 		free(buffer);
-// 		return NULL;
-
-// 	}
-// }
 
 // // df takes zero or one argument
 // // zero arguments , df returns every word from index with the number of docs each word is in
