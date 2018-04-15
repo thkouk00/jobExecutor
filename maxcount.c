@@ -12,27 +12,21 @@ void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd)
 		flag = 1;
 	word = strtok(NULL," \n\0");
 	
-	// printf("BUFF1 is %s\n", word);
 	char *docname = NULL;
 	int number;
 	
 	find_word(trie, word,&docname,&number,flag);
-	
+
 	buff1 = malloc(sizeof(char)*20);
-	// while (( = open(name,O_WRONLY|O_NONBLOCK))<0);
 	if (!docname)
 	{
 		number = 0;
-		// buff1 = malloc(sizeof(char)*20);
 		sprintf(buff1, "-1|%s","2");
 		//stelnei to -1 san mikos string kai timi valid
 		write(writefd, buff1, sizeof(char)*20);
-		// free(buff1);
 	}
 	else
-	{
-		// printf("Chose doc is %s with %d\n", docname,number);
-		
+	{	
 		if (!flag)
 			sprintf(buff1, "%ld|%s",sizeof(char)*(strlen(docname)+10),"2");		//maxcount
 		else
@@ -46,10 +40,8 @@ void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd)
 		sprintf(buff1, "%d|%s",number,docname);
 		//stelnei ton arithmo emfanisewn kai to onoma tou arxeiou
 		write(writefd, buff1, sizeof(char)*(strlen(docname)+10));
-		// printf("WRITE %s\n", buff1);
 		if (docname)
 			free(docname);
-		// free(buff1);
 	}
 	free(buff1);
 }

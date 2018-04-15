@@ -14,6 +14,7 @@
 #include "trie.h"
 #include "set_up_worker.h"
 #include "maxcount.h"
+#include "wc.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
 #define FIFO1 "/home/thanos/Desktop/fifo1"
@@ -203,15 +204,38 @@ int main(int argc , char* argv[])
 					{
 						maxcount(&trie,buff,name2,writefd);	
 					}
-					// else if (!strncmp(buff, "/mincount ", strlen("/mincount ")))
-					// {
-					// 	find_word(&trie, word,&docname,&number,1);
-					// }
-					else if (!strncmp(buff, "/wc ", strlen("/wc ")))
-						;// go
+					else if (!strncmp(buff, "/wc", strlen("/wc")))
+					{
+						int total[3]={0};
+						int tmp_number , count = 0;
+						char *buff1 = malloc(sizeof(char)*20); 		//temp size
+						int temp_size;
+						for (y=0;y<num_of_paths;y++)
+							wc(&info[y],&total[0],&total[1],&total[2]);
+						
+						//send them to parent
+						for (y=0;y<3;y++)
+						{
+							tmp_number = total[y];
+							while (tmp_number != 0)			//length of number (digits)
+							{
+								tmp_number /= 10;
+								++count;
+							}
+						}
+						sprintf(buff1, "%d", count+4); 	//+4 is 3chars for | and one for end
+						write(writefd, buff1, sizeof(char)*20);			//send it to parent
+						free(buff1);
+						buff1 = malloc(sizeof(char)*(count+3)); 
+						sprintf(buff1, "%d|%d|%d",total[0],total[1],total[2]);
+						printf("%s\n", buff1);
+						write(writefd, buff1, sizeof(char)*(count+4)); //htan 3
+						free(buff1);
+					}
 
 					
 					free(buff);
+					buff = NULL;
 				}
 				else
 				// if (size_to_read == -1)
@@ -222,15 +246,14 @@ int main(int argc , char* argv[])
 				}
 			};
 
-			printf("OUT of loop %d\n", getpid());
-			// close(readfd);
-			//kill(getpid(),SIGUSR1);
 			for (y=0;y<num_of_paths;y++)
 				free(path_array[y]);
 			free(path_array);
 			free(pid_ar);
 			free(name);
 			fclose(fp);
+			close(readfd);
+			close(writefd);
 			exit(0);
 		}
 		else
@@ -258,6 +281,7 @@ int main(int argc , char* argv[])
 	while(1)
 	{
 		char *tmp_buff = malloc(sizeof(char)*20);		//buffer to hold number of chars to sent to child
+		char *temp_buff2;								// helper buffer
 		printf("Give input:\n");
 		while ((x=getline(&buff,&buff_size,stdin))<=0);
 		char delimiter[] = " \t\n";
@@ -275,7 +299,11 @@ int main(int argc , char* argv[])
 		else if (!strncmp(txt, "/mincount", strlen("/mincount")+1))
 			valid = 3;
 		else if (!strncmp(txt, "/wc", strlen("/wc")+1))
+		{
 			valid = 4;
+
+			//tha parw apo kathe worker ta total kai tha ta prosthesw
+		}
 		else if (!strncmp(txt, "/exit", strlen("/exit")+1))
 		{
 			printf("Exiting\n");
@@ -294,6 +322,7 @@ int main(int argc , char* argv[])
 			printf("Wrong input try again\n");
 		if (valid)
 		{
+			char *word; // use for strtok 
 			sprintf(tmp_buff, "%ld",strlen(buff));
 			txt = NULL;
 			for (int j=0;j<W;j++)
@@ -306,32 +335,31 @@ int main(int argc , char* argv[])
 				//send query
 				write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
 			}
-			if (valid == 2)
-				final_num = 0;
-			else if (valid == 3)
-				final_num = 999999;
-			for (int j=0;j<W;j++)
+			if (valid == 2 || valid == 3)		//for max-mincount
 			{
-				memset(tmp_buff, 0, sizeof(char)*20);  //reset memory space
-				
-				while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
-
-				char *word;
-				word = strtok(tmp_buff," |\0\n");
-				int length = atoi(word);			//mikos string poy perimenw
-				word = strtok(NULL," |\0\n");
-				valid = atoi(word);					//kodikos valid
-				// printf("VALID IS %d and length %d\n", valid,length);
-				// if (valid == 1)
-				// 	;
-				// else if (valid == 2)
-				if (valid == 2 || valid == 3)
+				if (valid == 2)
+					final_num = 0;
+				else if (valid == 3)
+					final_num = 999999;
+				for (int j=0;j<W;j++)
 				{
+					memset(tmp_buff, 0, sizeof(char)*20);  //reset memory space
+					
+					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+
+					// char *word;
+					word = strtok(tmp_buff," |\0\n");
+					int length = atoi(word);			//mikos string poy perimenw
+					word = strtok(NULL," |\0\n");
+					valid = atoi(word);					//kodikos valid
+					
+					// if (valid == 2 || valid == 3)
+					// {
 					if (length>0)
 					{	
 						int t_num = 0;
 						
-						char *temp_buff2 = malloc(sizeof(char)*(length));
+						temp_buff2 = malloc(sizeof(char)*(length));
 						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
 						word = strtok(temp_buff2,"|\0\n");
 						t_num = atoi(word);
@@ -377,12 +405,32 @@ int main(int argc , char* argv[])
 						else
 							printf("No files found containing requested word.\n");
 					}
+				}	
+			}
+			else if (valid == 4)
+			{
+				int total_stats[3] = {0};
+				for (int j=0;j<W;j++)
+				{
+					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+					int length = atoi(tmp_buff);
+					temp_buff2 = malloc(sizeof(char)*length);
+					while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*(length)))<=0);
+					word = strtok(temp_buff2, "|\n\0");
+					total_stats[0] += atoi(word);
+					for (int k=1;k<3;k++)
+					{
+						word = strtok(NULL, "|\n\0");
+						total_stats[k] += atoi(word);
+					}
+					free(temp_buff2);
 				}
-				// else if (valid == 3)
-				// 	;
-				// else if (valid == 4)
-				// 	;
+				printf("WC results:\n");
+				printf("Total chars : %d\n", total_stats[0]);
+				printf("Total words : %d\n", total_stats[1]);
+				printf("Total lines : %d\n", total_stats[2]);
 			}	
+			
 		}
 		free(temp);
 		free(buff);
