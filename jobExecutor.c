@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <time.h>
 #include "send_msg.h"
 #include "list.h"
 #include "map_file.h"
@@ -19,6 +20,7 @@
 #define FIFO "/home/thanos/Desktop/fifo"
 #define FIFO1 "/home/thanos/Desktop/fifo1"
 #define FIFO2 "/home/thanos/Desktop/fifo2"
+#define LOG "/home/thanos/Desktop/log/Worker_"
 #define PERMS 0666
 
 static volatile sig_atomic_t stop = 0;
@@ -137,6 +139,13 @@ int main(int argc , char* argv[])
 		pid_ar[i] = fork();
 		if (!pid_ar[i])					// child process 
 		{
+			time_t curtime;
+			// time(&curtime);
+			char *time_buff;		//take time for log file
+			char *log_name = malloc(sizeof(char)*(strlen(LOG)+15));
+			sprintf(log_name, "%s%d.txt",LOG,getpid());
+			printf("LOG NAME %s\n", log_name);
+			FILE *f = fopen(log_name, "a");
 			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));		//for reading
 			sprintf(name, "%s%d", FIFO,getpid());
 
@@ -202,7 +211,7 @@ int main(int argc , char* argv[])
 						;//go to search
 					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
 					{
-						maxcount(&trie,buff,name2,writefd);	
+						maxcount(&trie,buff,name2,writefd,f);	
 					}
 					else if (!strncmp(buff, "/wc", strlen("/wc")))
 					{
@@ -229,7 +238,11 @@ int main(int argc , char* argv[])
 						buff1 = malloc(sizeof(char)*(count+3)); 
 						sprintf(buff1, "%d|%d|%d",total[0],total[1],total[2]);
 						printf("%s\n", buff1);
-						write(writefd, buff1, sizeof(char)*(count+4)); //htan 3
+						write(writefd, buff1, sizeof(char)*(count+4)); 
+						time(&curtime);
+						time_buff = ctime(&curtime);
+						time_buff[strlen(time_buff)-1] = '\0';
+						fprintf(f, "%s: wc: chars:%d words:%d lines:%d\n", time_buff,total[0],total[1],total[2]);
 						free(buff1);
 					}
 
@@ -252,6 +265,7 @@ int main(int argc , char* argv[])
 			free(pid_ar);
 			free(name);
 			fclose(fp);
+			fclose(f);
 			close(readfd);
 			close(writefd);
 			exit(0);
@@ -263,10 +277,7 @@ int main(int argc , char* argv[])
 			send_msg(&fp,name[i],name2[i],max_chars,pid_ar[i],&modulo, &temp_lines,&dirs_per_worker,&tmp_mod);
 		}
 	}
-
-
 	
-
 	int *writefd_array = malloc(sizeof(int)*W);
 	int *readfd_array = malloc(sizeof(int)*W);
 	for (i=0;i<W;i++)								//pipes ready for use

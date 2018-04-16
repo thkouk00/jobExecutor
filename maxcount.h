@@ -10,11 +10,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <time.h>
 #include "send_msg.h"
 #include "list.h"
 #include "map_file.h"
 #include "trie.h"
 
-void maxcount(trieNode_t **,char *, char *,int );
+void maxcount(trieNode_t **,char *, char *,int ,FILE *);
 
 #endif

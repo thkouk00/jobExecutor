@@ -1,10 +1,12 @@
 #include "maxcount.h"	
 
-void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd)
+void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
 {
 	int flag;
 	char *word;
 	char *buff1 = buff;
+	char *time_buff;
+	time_t curtime;
 	word = strtok(buff1," \n\0");
 	if (!strcmp("/maxcount",word))
 		flag = 0;
@@ -40,6 +42,13 @@ void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd)
 		sprintf(buff1, "%d|%s",number,docname);
 		//stelnei ton arithmo emfanisewn kai to onoma tou arxeiou
 		write(writefd, buff1, sizeof(char)*(strlen(docname)+10));
+		time(&curtime);
+		time_buff = ctime(&curtime);
+		time_buff[strlen(time_buff)-1] = '\0';
+		if (!flag)
+			fprintf(f, "%s: maxcount : word:%s dockname:%s number:%d\n", time_buff,word,docname,number);
+		else
+			fprintf(f, "%s: mincount : word:%s dockname:%s number:%d\n", time_buff,word,docname,number);
 		if (docname)
 			free(docname);
 	}
