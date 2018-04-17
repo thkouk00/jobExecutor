@@ -174,7 +174,7 @@ void printNode(trieNode_t **root,char *key)
 	free(buffer);
 }
 ///////////////////////////////////
-void find_word(trieNode_t **root,char *key,char **name,int *number,int min_enabled)
+void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 {
 	int found = 0 , finish = 1, flag = 0;
 	char *str = key;
@@ -239,46 +239,94 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int min_enabl
 		int count;
 		trie_list *cur = tempNode->plist;
 	
-		if (min_enabled)
+		if (choice == 3)			//for search
 		{
-			//mincount
-			count = 999999999;		
+			int buff_size = 100;
+			char *result = malloc(sizeof(char)*buff_size);
+			char *tmp_buff = malloc(sizeof(char)*30);
+			memset(result, 0, sizeof(char)*buff_size);
 			while (cur->next)
 			{
 				cur = cur->next;
-				if (cur->number_of_times < count)
+				line_info *line_cur = cur->linfo;
+				if (strlen(result)+strlen(cur->name) >= buff_size)
 				{
-					if (name1 != NULL)
-						free(name1);
-					count = cur->number_of_times;
-					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
-					strcpy(name1, cur->name);
+					buff_size += buff_size;
+					result = realloc(result, buff_size);
 				}
+				sprintf(result+strlen(result), "%s|",cur->name);
+				while (line_cur->next)
+				{
+					line_cur = line_cur->next;
+					sprintf(tmp_buff, "%d|%ld|",line_cur->line,line_cur->offset);
+					
+					if (strlen(result)+strlen(tmp_buff) >= buff_size)
+					{
+						buff_size += buff_size;
+						result = realloc(result, buff_size);
+					}	
+					sprintf(result+strlen(result), "%d|%ld|",line_cur->line,line_cur->offset);
+				}
+				if (strlen(result)+2 >= buff_size)
+				{
+					buff_size +=2;
+					result = realloc(result, buff_size);
+				}
+				sprintf(result+strlen(result), "$");
 			}
+			*name = result;
+			// printf("%s\n", *name);
+			free(tmp_buff);
+			// free(result);
 		}
 		else
 		{
-			count = 0;
-			while (cur->next)
+			if (choice == 1)
 			{
-				cur = cur->next;
-				if (cur->number_of_times > count)
+				//mincount
+				count = 999999999;		
+				while (cur->next)
 				{
-					if (name1 != NULL)
-						free(name1);
-					count = cur->number_of_times;
-					name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
-					strcpy(name1, cur->name);
+					cur = cur->next;
+					if (cur->number_of_times < count)
+					{
+						if (name1 != NULL)
+							free(name1);
+						count = cur->number_of_times;
+						name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
+						strcpy(name1, cur->name);
+					}
 				}
 			}
+			else if (choice == 0)
+			{
+				count = 0;
+				while (cur->next)
+				{
+					cur = cur->next;
+					if (cur->number_of_times > count)
+					{
+						if (name1 != NULL)
+							free(name1);
+						count = cur->number_of_times;
+						name1 = malloc(sizeof(char)*(strlen(cur->name)+1));
+						strcpy(name1, cur->name);
+					}
+				}
+			}
+			if (name1 != NULL)
+			{
+				*number = count;
+				*name = malloc(sizeof(char)*(strlen(name1)+1));
+				strcpy(*name, name1);
+			}
+			else
+				name = NULL;			//edw giati den exw valei *name?? na to tsekaro
 		}
-		if (name1 != NULL)
-		{
-			*number = count;
-			*name = malloc(sizeof(char)*(strlen(name1)+1));
-			strcpy(*name, name1);
-		}
-		else
+	}
+	else
+	{
+		if (choice == 3)
 			name = NULL;
 	}
 	free(buffer);

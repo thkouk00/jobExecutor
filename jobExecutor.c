@@ -16,6 +16,7 @@
 #include "set_up_worker.h"
 #include "maxcount.h"
 #include "wc.h"
+#include "search.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
 #define FIFO1 "/home/thanos/Desktop/fifo1"
@@ -35,8 +36,10 @@ void catchsig(int signo)
 	if (signo == SIGUSR2)
 	{
 		stop = 1;
-		write(1, "Stop value changed", sizeof(char)*strlen("**Stop value changed"));
+		write(1, "Stop value changed", sizeof(char)*strlen("Stop value changed"));
 	}
+	if (signo == SIGALRM)
+		write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
 }
 
 char *paths_to_pid; //keep track of paths , every cell has a pid
@@ -115,6 +118,7 @@ int main(int argc , char* argv[])
 	sigfillset(&(act.sa_mask));
 	sigaction(SIGUSR1,&act,NULL);				//signal handler for SIGUSR1
 	sigaction(SIGUSR2,&act,NULL);				//signal handler for SIGUSR2
+	sigaction(SIGALRM,&act,NULL);
 
 	int *pid_ar = malloc(sizeof(int)*W);
 	int n = 0;
@@ -208,7 +212,9 @@ int main(int argc , char* argv[])
 					buff = malloc(sizeof(char)*(size_to_read+1));
 					while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
 					if (!strncmp(buff, "/search ", strlen("/search ")))
-						;//go to search
+					{
+						search(&trie,buff,name2,writefd,f);
+					}
 					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
 					{
 						maxcount(&trie,buff,name2,writefd,f);	
@@ -246,7 +252,7 @@ int main(int argc , char* argv[])
 						free(buff1);
 					}
 
-					
+					printf("CHILD HERE\n");
 					free(buff);
 					buff = NULL;
 				}
@@ -286,7 +292,9 @@ int main(int argc , char* argv[])
 		while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
 	}
 
-
+	// alarm(1);
+	// pause();
+	// printf("continue\n");
 
 	// parent process
 	while(1)
@@ -310,11 +318,7 @@ int main(int argc , char* argv[])
 		else if (!strncmp(txt, "/mincount", strlen("/mincount")+1))
 			valid = 3;
 		else if (!strncmp(txt, "/wc", strlen("/wc")+1))
-		{
 			valid = 4;
-
-			//tha parw apo kathe worker ta total kai tha ta prosthesw
-		}
 		else if (!strncmp(txt, "/exit", strlen("/exit")+1))
 		{
 			printf("Exiting\n");
@@ -326,6 +330,7 @@ int main(int argc , char* argv[])
 				//send -1 to stop child's loop
 				write(writefd_array[j], "-1", sizeof(char)*20);
 				close(writefd_array[j]);
+				free(tmp_buff);
 			}
 			break;
 		}
@@ -336,17 +341,39 @@ int main(int argc , char* argv[])
 			char *word; // use for strtok 
 			sprintf(tmp_buff, "%ld",strlen(buff));
 			txt = NULL;
-			for (int j=0;j<W;j++)
+			for (int j=0;j<W;j++)				//send query to workers
 			{	
 				kill(pid_ar[j],SIGUSR1);
-				// printf("SIGUSR1 %d\n",pid_ar[j]);
 				
 				//inform child how many chars to expect
 				write(writefd_array[j], tmp_buff, sizeof(char)*20);		
 				//send query
 				write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
 			}
-			if (valid == 2 || valid == 3)		//for max-mincount
+			if (valid == 1)
+			{
+				int stop;
+				for (int j=0;j<W;j++)
+				{
+					while (1)
+					{
+						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+						word = strtok(tmp_buff, " \0\n");
+						int length = atoi(word);
+						temp_buff2 = malloc(sizeof(char)*length); 
+						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
+						// if (temp_buff2[length] != '\0')
+						// 	temp_buff2[length] = '\0';
+						printf("MAIN: %s\n", temp_buff2);
+						free(temp_buff2);
+						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*2))<=0);
+						stop = atoi(tmp_buff);
+						if (stop == 1)
+							break;
+					}
+				}
+			}
+			else if (valid == 2 || valid == 3)		//for max-mincount
 			{
 				if (valid == 2)
 					final_num = 0;
@@ -443,6 +470,7 @@ int main(int argc , char* argv[])
 			}	
 			
 		}
+		printf("HEREE\n");
 		free(temp);
 		free(buff);
 		buff = NULL;

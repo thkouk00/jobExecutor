@@ -164,6 +164,18 @@ void print_lineInfo(line_info **head)
 	}
 }
 
+int linfo_length(line_info **head)
+{
+	line_info *cur = *head;
+	int count = 0;
+	while (cur->next)
+	{
+		cur = cur->next;
+		count++;
+	}
+	return count;
+}
+
 void Free_lineInfo(line_info **head)	//thelei ftiaximo
 {
 	line_info *cur = *head;
@@ -228,6 +240,18 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 
 	}
 
+}
+
+int length_plist(trie_list **head)
+{
+	int count = 0;
+	trie_list *cur = *head;
+	while (cur->next)
+	{
+		cur = cur->next;
+		count++;
+	}
+	return count;
 }
 
 void print_plist(trie_list **);

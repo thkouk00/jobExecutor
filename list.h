@@ -57,11 +57,13 @@ void FreeList_search(list_t **);
 // struct for line info (offset-line)
 void insert_lineInfo(line_info **,int , long );
 void print_lineInfo(line_info **);
+int linfo_length(line_info **);
 void Free_lineInfo(line_info **);
 
 //struct trie_list
 trie_list *Create_Plist(trie_list **);
 void insert_to_plist(trie_list **, char *,int , long);
+int length_plist(trie_list **);
 void print_plist(trie_list **);
 void Free_plist(trie_list **);
 
