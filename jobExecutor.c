@@ -209,10 +209,12 @@ int main(int argc , char* argv[])
 				size_to_read = atoi(tmp_buff);
 				if (size_to_read != -1)
 				{
-					buff = malloc(sizeof(char)*(size_to_read+1));
+					buff = malloc(sizeof(char)*(size_to_read)+1);	//htan size to read +1
 					while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
+					buff[size_to_read] = '\0';
 					if (!strncmp(buff, "/search ", strlen("/search ")))
 					{
+						printf("RECEIVE %s\n", buff);
 						search(&trie,buff,name2,writefd,f);
 					}
 					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
@@ -330,8 +332,9 @@ int main(int argc , char* argv[])
 				//send -1 to stop child's loop
 				write(writefd_array[j], "-1", sizeof(char)*20);
 				close(writefd_array[j]);
-				free(tmp_buff);
+				// free(tmp_buff);
 			}
+			free(tmp_buff);
 			break;
 		}
 		else
@@ -360,17 +363,19 @@ int main(int argc , char* argv[])
 						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
 						word = strtok(tmp_buff, " \0\n");
 						int length = atoi(word);
-						temp_buff2 = malloc(sizeof(char)*length); 
-						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
-						// if (temp_buff2[length] != '\0')
-						// 	temp_buff2[length] = '\0';
-						printf("MAIN: %s\n", temp_buff2);
-						free(temp_buff2);
+						if (length != -1)
+						{
+							temp_buff2 = malloc(sizeof(char)*length); 
+							while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
+							printf("MAIN: %s\n", temp_buff2);
+							free(temp_buff2);
+						}
 						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*2))<=0);
 						stop = atoi(tmp_buff);
 						if (stop == 1)
 							break;
 					}
+					// printf("MAIN\n");
 				}
 			}
 			else if (valid == 2 || valid == 3)		//for max-mincount
