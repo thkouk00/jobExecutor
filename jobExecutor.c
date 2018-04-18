@@ -355,7 +355,11 @@ int main(int argc , char* argv[])
 			}
 			if (valid == 1)
 			{
+				FILE *fpointer;
 				int stop;
+				int offset;
+				char *line_buff = NULL;
+				size_t s;	//size of line_buff;
 				for (int j=0;j<W;j++)
 				{
 					while (1)
@@ -368,6 +372,40 @@ int main(int argc , char* argv[])
 							temp_buff2 = malloc(sizeof(char)*length); 
 							while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
 							printf("MAIN: %s\n", temp_buff2);
+							//de-serialize string and print documents.
+							word = strtok(temp_buff2,"|");
+							fpointer = fopen(word,"r");
+							word = strtok(NULL,"|");
+							while (word != NULL)
+							{
+								if (!strcmp(word,"$"))
+								{
+									word = strtok(NULL,"|");
+									fclose(fpointer);
+									if (word == NULL)
+									{
+										// fclose(fpointer);
+										break;
+									}
+									else
+									{
+										// fclose(fpointer);
+										fpointer = fopen(word,"r");
+									}
+
+								}
+								else
+								{
+									offset = atoi(word);
+									fseek(fpointer,offset,SEEK_SET);
+									getline(&line_buff,&s,fpointer);
+									printf("%s\n", line_buff);
+									free(line_buff);
+									line_buff = NULL;
+								}
+								word = strtok(NULL,"|");
+
+							}
 							free(temp_buff2);
 						}
 						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*2))<=0);

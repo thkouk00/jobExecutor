@@ -258,21 +258,21 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 				while (line_cur->next)
 				{
 					line_cur = line_cur->next;
-					sprintf(tmp_buff, "%d|%ld|",line_cur->line,line_cur->offset);
+					sprintf(tmp_buff, "%ld|",line_cur->offset);
 					
 					if (strlen(result)+strlen(tmp_buff) >= buff_size)
 					{
 						buff_size += buff_size;
 						result = realloc(result, buff_size);
 					}	
-					sprintf(result+strlen(result), "%d|%ld|",line_cur->line,line_cur->offset);
+					sprintf(result+strlen(result), "%ld|",line_cur->offset);
 				}
-				if (strlen(result)+2 >= buff_size)
+				if (strlen(result)+3 >= buff_size)
 				{
-					buff_size +=2;
+					buff_size +=3;
 					result = realloc(result, buff_size);
 				}
-				sprintf(result+strlen(result), "$");
+				sprintf(result+strlen(result), "$|");
 			}
 			*name = result;
 			// printf("%s\n", *name);
