@@ -275,7 +275,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 				sprintf(result+strlen(result), "$|");
 			}
 			*name = result;
-			// printf("%s\n", *name);
 			free(tmp_buff);
 			// free(result);
 		}

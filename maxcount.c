@@ -46,9 +46,9 @@ void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
 		time_buff = ctime(&curtime);
 		time_buff[strlen(time_buff)-1] = '\0';
 		if (!flag)
-			fprintf(f, "%s: maxcount : word:%s dockname:%s number:%d\n", time_buff,word,docname,number);
+			fprintf(f, "%s: maxcount : word: %s document:%s number:%d\n", time_buff,word,docname,number);
 		else
-			fprintf(f, "%s: mincount : word:%s dockname:%s number:%d\n", time_buff,word,docname,number);
+			fprintf(f, "%s: mincount : word: %s document:%s number:%d\n", time_buff,word,docname,number);
 		if (docname)
 			free(docname);
 	}

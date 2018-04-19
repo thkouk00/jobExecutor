@@ -250,16 +250,15 @@ int main(int argc , char* argv[])
 						time(&curtime);
 						time_buff = ctime(&curtime);
 						time_buff[strlen(time_buff)-1] = '\0';
-						fprintf(f, "%s: wc: chars:%d words:%d lines:%d\n", time_buff,total[0],total[1],total[2]);
+						fprintf(f, "%s: wc: chars: %d words: %d lines: %d\n", time_buff,total[0],total[1],total[2]);
 						free(buff1);
 					}
 
-					printf("CHILD HERE\n");
+
 					free(buff);
 					buff = NULL;
 				}
 				else
-				// if (size_to_read == -1)
 				{
 					close(readfd);
 					close(writefd);
@@ -294,10 +293,6 @@ int main(int argc , char* argv[])
 		while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
 	}
 
-	// alarm(1);
-	// pause();
-	// printf("continue\n");
-
 	// parent process
 	while(1)
 	{
@@ -327,12 +322,10 @@ int main(int argc , char* argv[])
 			for (int j=0;j<W;j++)
 			{	
 				kill(pid_ar[j],SIGUSR1);
-				// printf("SIGUSR2 %d\n",pid_ar[j]);
 
 				//send -1 to stop child's loop
 				write(writefd_array[j], "-1", sizeof(char)*20);
 				close(writefd_array[j]);
-				// free(tmp_buff);
 			}
 			free(tmp_buff);
 			break;
@@ -356,65 +349,83 @@ int main(int argc , char* argv[])
 			if (valid == 1)
 			{
 				FILE *fpointer;
+				int workers_failed = W;
 				int stop;
 				int offset;
 				char *line_buff = NULL;
-				size_t s;	//size of line_buff;
+				char **results = malloc(sizeof(char*)*W);
 				for (int j=0;j<W;j++)
 				{
-					while (1)
+					
+					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+					word = strtok(tmp_buff, " \0\n");
+					int length = atoi(word);
+					if (length != -1)
 					{
-						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
-						word = strtok(tmp_buff, " \0\n");
-						int length = atoi(word);
-						if (length != -1)
-						{
-							temp_buff2 = malloc(sizeof(char)*length); 
-							while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
-							printf("MAIN: %s\n", temp_buff2);
-							//de-serialize string and print documents.
-							word = strtok(temp_buff2,"|");
-							fpointer = fopen(word,"r");
-							word = strtok(NULL,"|");
-							while (word != NULL)
-							{
-								if (!strcmp(word,"$"))
-								{
-									word = strtok(NULL,"|");
-									fclose(fpointer);
-									if (word == NULL)
-									{
-										// fclose(fpointer);
-										break;
-									}
-									else
-									{
-										// fclose(fpointer);
-										fpointer = fopen(word,"r");
-									}
+						temp_buff2 = malloc(sizeof(char)*length); 
+						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
+						// printf("MAIN: %s\n", temp_buff2);
+						results[j] = malloc(sizeof(char)*length);
+						strcpy(results[j], temp_buff2);
+						// printf("RES %s\n", results[j]);
+						//de-serialize string and print documents.
+						// word = strtok(temp_buff2,"|");
+						// fpointer = fopen(word,"r");
+						// word = strtok(NULL,"|");
+						// while (word != NULL)
+						// {
+						// 	if (!strcmp(word,"$"))
+						// 	{
+						// 		word = strtok(NULL,"|");
+						// 		fclose(fpointer);
+						// 		if (word == NULL)
+						// 		{
+						// 			// fclose(fpointer);
+						// 			break;
+						// 		}
+						// 		else
+						// 		{
+						// 			// fclose(fpointer);
+						// 			fpointer = fopen(word,"r");
+						// 		}
 
-								}
-								else
-								{
-									offset = atoi(word);
-									fseek(fpointer,offset,SEEK_SET);
-									getline(&line_buff,&s,fpointer);
-									printf("%s\n", line_buff);
-									free(line_buff);
-									line_buff = NULL;
-								}
-								word = strtok(NULL,"|");
+						// 	}
+						// 	else
+						// 	{
+						// 		offset = atoi(word);
+						// 		fseek(fpointer,offset,SEEK_SET);
+						// 		getline(&line_buff,&s,fpointer);
+						// 		printf("%s\n", line_buff);
+						// 		free(line_buff);
+						// 		line_buff = NULL;
+						// 	}
+						// 	word = strtok(NULL,"|");
 
-							}
-							free(temp_buff2);
-						}
-						while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*2))<=0);
-						stop = atoi(tmp_buff);
-						if (stop == 1)
-							break;
+						// }
+						free(temp_buff2);
 					}
-					// printf("MAIN\n");
+					else
+					{
+						results[j] = NULL;
+						workers_failed--;
+					}
 				}
+				// for (int j=0;j<W;j++)
+				// {
+				// 	word = strtok(results[j],"|");	// char is ~ , simainei oti akolouthei lexi pou epsaxa	
+				// 	while (word != NULL)
+				// 	{
+				// 		word = strtok(NULL,"|");		// word searched
+				// 		word = strtok(NULL,"|");		// take path
+				// 		fpointer = fopen(word,"r");
+				// 		word = strtok(NULL,"|");
+				// 		while (strcmp(word,"$") > 0 || strcmp(word,"$") < 0)
+				// 		{
+
+				// 		}
+				// 	}
+				// }
+				printf("Result from %d/%d workers!\n", workers_failed,W);
 			}
 			else if (valid == 2 || valid == 3)		//for max-mincount
 			{
@@ -434,8 +445,6 @@ int main(int argc , char* argv[])
 					word = strtok(NULL," |\0\n");
 					valid = atoi(word);					//kodikos valid
 					
-					// if (valid == 2 || valid == 3)
-					// {
 					if (length>0)
 					{	
 						int t_num = 0;
@@ -513,7 +522,6 @@ int main(int argc , char* argv[])
 			}	
 			
 		}
-		printf("HEREE\n");
 		free(temp);
 		free(buff);
 		buff = NULL;
