@@ -26,6 +26,13 @@ void maxcount(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
 		sprintf(buff1, "-1|%s","2");
 		//stelnei to -1 san mikos string kai timi valid
 		write(writefd, buff1, sizeof(char)*20);
+		time(&curtime);
+		time_buff = ctime(&curtime);
+		time_buff[strlen(time_buff)-1] = '\0';
+		if (!flag)
+			fprintf(f, "%s: maxcount : word: %s document: NONE number: -\n", time_buff,word);
+		else
+			fprintf(f, "%s: mincount : word: %s document: NONE number: -\n", time_buff,word);
 	}
 	else
 	{	
