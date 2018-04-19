@@ -19,7 +19,7 @@
 #include "maxcount.h"
 #include "wc.h"
 
-void search(trieNode_t **,char *, char *, int,FILE *);
+void search(trieNode_t **,char *, char *, int,FILE *,int);
 
 
 #endif

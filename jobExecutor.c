@@ -214,8 +214,10 @@ int main(int argc , char* argv[])
 					buff[size_to_read] = '\0';
 					if (!strncmp(buff, "/search ", strlen("/search ")))
 					{
-						printf("RECEIVE %s\n", buff);
-						search(&trie,buff,name2,writefd,f);
+						while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
+						int deadline = atoi(tmp_buff);
+						printf("RECEIVE %s and deadline %d\n", buff,deadline);
+						search(&trie,buff,name2,writefd,f,deadline);
 					}
 					else if (!strncmp(buff, "/maxcount ", strlen("/maxcount ")) || !strncmp(buff, "/mincount ", strlen("/mincount ")))
 					{
@@ -304,12 +306,54 @@ int main(int argc , char* argv[])
 		char *temp = malloc(sizeof(char)*(strlen(buff)+1));
 		strncpy(temp, buff,strlen(buff));
 		char *txt = strtok(temp,delimiter);
+		char *word; // use for strtok 
 		int valid = 0;
 		int exit_flag = 0;
 		int final_num; 					//used in max/mincount
+		int deadline = -1;				//used for search
+
 		// printf("buff %s\ntemp %s\n", buff,temp);
 		if (!strncmp(txt, "/search", strlen("/search")+1))
-			valid = 1;
+		{
+			char *word2;
+			deadline = -1;
+			temp_buff2 = malloc(sizeof(char)*strlen(buff));
+			strcpy(temp_buff2, buff);
+			word = strtok(buff, " \0\n");
+			while (word != NULL)				// check input for -d N 
+			{
+				if (!strcmp(word,"-d"))
+				{
+
+					word = strtok(NULL, " \0\n");
+					if (word == NULL)
+						break;
+					word2 = strtok(NULL, " \0\n");
+					if (word2 == NULL)
+					{
+						deadline = atoi(word);
+						break;
+					}
+					else
+					{
+						word = word2;
+					}
+				}
+				word = strtok(NULL, " \0\n");
+			}	
+			if (deadline > 0)
+			{	
+				valid = 1;
+				sprintf(tmp_buff, "%d",deadline);
+				printf("temp_buff2 is %s\n", temp_buff2);
+				memset(buff, 0, sizeof(char)*buff_size);
+				strncpy(buff, temp_buff2, strlen(temp_buff2)-strlen(tmp_buff)-4);
+				printf("BUFF %s.\n", buff);
+			}
+			else
+				printf("Wrong input try again\n");
+			free(temp_buff2);
+		}
 		else if (!strncmp(txt, "/maxcount", strlen("/maxcount")+1))
 			valid = 2;
 		else if (!strncmp(txt, "/mincount", strlen("/mincount")+1))
@@ -334,20 +378,26 @@ int main(int argc , char* argv[])
 			printf("Wrong input try again\n");
 		if (valid)
 		{
-			char *word; // use for strtok 
-			sprintf(tmp_buff, "%ld",strlen(buff));
+			
+			// sprintf(tmp_buff, "%ld",strlen(buff));
 			txt = NULL;
 			for (int j=0;j<W;j++)				//send query to workers
 			{	
+				sprintf(tmp_buff, "%ld",strlen(buff));
 				kill(pid_ar[j],SIGUSR1);
 				
 				//inform child how many chars to expect
 				write(writefd_array[j], tmp_buff, sizeof(char)*20);		
 				//send query
 				write(writefd_array[j], buff, sizeof(char)*(strlen(buff)));
+				if (valid == 1)
+				{	
+					sprintf(tmp_buff, "%d",deadline);
+					write(writefd_array[j], tmp_buff, sizeof(char)*20);
+				}
 			}
 			if (valid == 1)
-			{
+			{	
 				FILE *fpointer;
 				int workers_failed = W;
 				int stop;
@@ -365,44 +415,8 @@ int main(int argc , char* argv[])
 					{
 						temp_buff2 = malloc(sizeof(char)*length); 
 						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
-						// printf("MAIN: %s\n", temp_buff2);
 						results[j] = malloc(sizeof(char)*length);
 						strcpy(results[j], temp_buff2);
-						// printf("RES %s\n", results[j]);
-						//de-serialize string and print documents.
-						// word = strtok(temp_buff2,"|");
-						// fpointer = fopen(word,"r");
-						// word = strtok(NULL,"|");
-						// while (word != NULL)
-						// {
-						// 	if (!strcmp(word,"$"))
-						// 	{
-						// 		word = strtok(NULL,"|");
-						// 		fclose(fpointer);
-						// 		if (word == NULL)
-						// 		{
-						// 			// fclose(fpointer);
-						// 			break;
-						// 		}
-						// 		else
-						// 		{
-						// 			// fclose(fpointer);
-						// 			fpointer = fopen(word,"r");
-						// 		}
-
-						// 	}
-						// 	else
-						// 	{
-						// 		offset = atoi(word);
-						// 		fseek(fpointer,offset,SEEK_SET);
-						// 		getline(&line_buff,&s,fpointer);
-						// 		printf("%s\n", line_buff);
-						// 		free(line_buff);
-						// 		line_buff = NULL;
-						// 	}
-						// 	word = strtok(NULL,"|");
-
-						// }
 						free(temp_buff2);
 					}
 					else
@@ -413,6 +427,8 @@ int main(int argc , char* argv[])
 				}
 				for (int j=0;j<W;j++)
 				{
+					if (results[j] == NULL)
+						continue;
 					word = strtok(results[j],"|");	
 					fpointer = fopen(word,"r");
 					word = strtok(NULL,"|");
@@ -423,15 +439,9 @@ int main(int argc , char* argv[])
 							word = strtok(NULL,"|");
 							fclose(fpointer);
 							if (word == NULL)
-							{
-								// fclose(fpointer);
 								break;
-							}
 							else
-							{
-								// fclose(fpointer);
 								fpointer = fopen(word,"r");
-							}
 
 						}
 						else

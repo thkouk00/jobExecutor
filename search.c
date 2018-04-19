@@ -4,18 +4,14 @@ static volatile sig_atomic_t stop = 0;
 
 void catchsigd(int signo)
 {
-	if (signo == SIGUSR2)
-	{
-		write(1, "Stop value changed", sizeof(char)*strlen("Stop value changed"));
-	}
 	if (signo == SIGALRM)
 	{
 		stop = 1;
-		write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
+		// write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
 	}
 }
 
-void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
+void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int deadline)
 {
 
 	time_t curtime;
@@ -35,7 +31,7 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
 	char delimiter[] = " \n\0";
 	word = strtok_r(buff,delimiter,&next1);					//htan buff1
 	word = strtok_r(NULL,delimiter,&next1);
-	// alarm(1);
+	alarm(deadline);
 	// sleep(1);
 	while (word != NULL)
 	{	
@@ -79,7 +75,7 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
 		}
 		word = strtok_r(NULL,delimiter,&next1);
 	}
-	// alarm(0);
+	alarm(0);
 	if (stop)
 	{
 		sprintf(size_buff, "-1");
