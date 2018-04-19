@@ -47,7 +47,7 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f)
 				total_size += strlen(result)+strlen(word)+4;
 				total_res = realloc(total_res, total_size);
 			}
-			sprintf(total_res+strlen(total_res), "~|%s|%s", word,result);
+			sprintf(total_res+strlen(total_res), "%s", result);
 
 			word2 = strtok_r(result, "|",&next2);			//path
 			time(&curtime);

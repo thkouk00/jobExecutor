@@ -353,6 +353,7 @@ int main(int argc , char* argv[])
 				int stop;
 				int offset;
 				char *line_buff = NULL;
+				size_t s;
 				char **results = malloc(sizeof(char*)*W);
 				for (int j=0;j<W;j++)
 				{
@@ -410,21 +411,41 @@ int main(int argc , char* argv[])
 						workers_failed--;
 					}
 				}
-				// for (int j=0;j<W;j++)
-				// {
-				// 	word = strtok(results[j],"|");	// char is ~ , simainei oti akolouthei lexi pou epsaxa	
-				// 	while (word != NULL)
-				// 	{
-				// 		word = strtok(NULL,"|");		// word searched
-				// 		word = strtok(NULL,"|");		// take path
-				// 		fpointer = fopen(word,"r");
-				// 		word = strtok(NULL,"|");
-				// 		while (strcmp(word,"$") > 0 || strcmp(word,"$") < 0)
-				// 		{
+				for (int j=0;j<W;j++)
+				{
+					word = strtok(results[j],"|");	
+					fpointer = fopen(word,"r");
+					word = strtok(NULL,"|");
+					while (word != NULL)
+					{
+						if (!strcmp(word,"$"))
+						{
+							word = strtok(NULL,"|");
+							fclose(fpointer);
+							if (word == NULL)
+							{
+								// fclose(fpointer);
+								break;
+							}
+							else
+							{
+								// fclose(fpointer);
+								fpointer = fopen(word,"r");
+							}
 
-				// 		}
-				// 	}
-				// }
+						}
+						else
+						{
+							offset = atoi(word);
+							fseek(fpointer,offset,SEEK_SET);
+							getline(&line_buff,&s,fpointer);
+							printf("%s\n", line_buff);
+							free(line_buff);
+							line_buff = NULL;
+						}
+						word = strtok(NULL,"|");
+					}
+				}
 				printf("Result from %d/%d workers!\n", workers_failed,W);
 			}
 			else if (valid == 2 || valid == 3)		//for max-mincount
