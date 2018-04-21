@@ -7,7 +7,6 @@ void catchsigd(int signo)
 	if (signo == SIGALRM)
 	{
 		stop = 1;
-		// write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
 	}
 }
 
@@ -23,7 +22,6 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 
 	size_t total_size = 100;
 	char *word , *word2 , *next1 , *next2;		//used for strtok_r 
-	char *buff1;// = buff;						//axristo na to diagrapso
 	char *size_buff = malloc(sizeof(char)*20);
 	char *result = NULL;
 	char *total_res = malloc(sizeof(char)*total_size);

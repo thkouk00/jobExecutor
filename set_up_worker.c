@@ -54,13 +54,15 @@ void set_up_worker(listNode **info,char *path_array)
 			buff = NULL;
 			buff_size = 0;
 		}
-		
+		free(buff);				//extra
+		buff = NULL;
 		fseek(file, 0, SEEK_SET);
 		pos--;	 // arxika htan katw apo to insert
 		insert(info,filename,count_lines,max,offset_array,pos);	
 		map_file(file,info,filename);				//function to map file
 		fclose(file);
 		free(filename);
+		free(offset_array);		//extr
 	}
 	closedir(dp);
 }

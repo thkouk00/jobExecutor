@@ -53,20 +53,13 @@ void fill_trie(listNode **head,trieNode_t **root)
 		{
 			cur = cur->next; 
 			str = malloc(sizeof(char)*(cur->max_chars+1));
-			// printf("NAME:%s\n",cur->name);
 			for (int i =0;i<cur->lines;i++)
 			{
-				// printf("i:%d\n", i);
 				strncpy(str, cur->map[i], strlen(cur->map[i])+1);
-				// printf("STR->%s\n", cur->map[i]);
 				str1 = strtok(str, delimiter);
 				while (str1!=NULL)
 				{
-					
-					//anti gia name kai path_num na dw mipos perasw to full path
 					AddNode(root,str1,i,cur->name,cur->offset_array[i]);
-					// printf("OFSET %d is %d\n",i,cur->offset_array[i]);
-					// printf("%s\n", str1);
 					str1 = strtok(NULL, delimiter);
 				}
 			}
@@ -104,24 +97,23 @@ void length(listNode **head)
 	printf("Length %d\n",len);
 }
 
-void FreeList(listNode **head)
+void FreeList(listNode **head)			// edw exw kanei free egw
 {
 	listNode *cur = *head;
-	listNode *temp;
-	if (*head != NULL)
+	listNode *cur2;
+	
+	while (cur->next)
 	{
-		free((*head)->name);
-		free((*head)->offset_array);
-		//free map prepei
-		while (cur->next != NULL)
-		{
-			temp = cur->next;
-			cur->next = temp->next;
-			free(temp);
-			if (cur == NULL)
-				break;
-		}
+		cur2 = cur->next;
+		free(cur2->name);
+		free(cur2->offset_array);
+		for (int i=0;i<cur2->lines;i++)
+			free(cur2->map[i]);
+		free(cur2->map);
+		cur->next = cur2->next;
+		free(cur2);
 	}
+	free(*head);
 }
 
 // for line_info
@@ -180,12 +172,12 @@ int linfo_length(line_info **head)
 void Free_lineInfo(line_info **head)	//thelei ftiaximo
 {
 	line_info *cur = *head;
-	line_info *tmp;
+	line_info *cur2;
 	while (cur->next)
 	{
-		tmp = cur->next;
-		cur->next = tmp->next;
-		free(tmp);
+		cur2 = cur->next;
+		cur->next = cur2->next;
+		free(cur2);
 	}
 }
 

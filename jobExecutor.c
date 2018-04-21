@@ -100,7 +100,8 @@ int main(int argc , char* argv[])
 		file_count = 0;
 		lines++;
 	};
-
+	free(buff);							//auto edw to free ekana extra gia 10/10
+	buff = NULL;
 	printf("Lines %d\n",lines);
 	
 	int temp_lines = lines;		
@@ -138,8 +139,8 @@ int main(int argc , char* argv[])
 	
 
 	// create named piped for communication between parent-child
-	if ((mkfifo(FIFO1,PERMS) < 0))				// read : parent <--> write : child
-		perror("PARENT cant create FIFO1\n");
+	// if ((mkfifo(FIFO1,PERMS) < 0))				// read : parent <--> write : child
+	// 	perror("PARENT cant create FIFO1\n");
 	
 
 	int readfd , writefd , status;
@@ -148,6 +149,13 @@ int main(int argc , char* argv[])
 		pid_ar[i] = fork();
 		if (!pid_ar[i])					// child process 
 		{
+			for (int y=0;y<W;y++)	//malloc'd before fork , so i free them
+			{
+				free(name[y]);
+				free(name2[y]);
+			}
+			free(name);
+			free(name2);
 			time_t curtime;
 			char *time_buff;		//take time for log file
 			char *log_name = malloc(sizeof(char)*(strlen(LOG)+15));
@@ -261,9 +269,7 @@ int main(int argc , char* argv[])
 						time(&curtime);
 						time_buff = ctime(&curtime);
 						time_buff[strlen(time_buff)-1] = '\0';
-						printf("GRAFW LOGFILE\n");
 						fprintf(f, "%s: wc: chars: %d words: %d lines: %d\n", time_buff,total[0],total[1],total[2]);
-						printf("EGRAPSA\n");
 						free(buff1);
 					}
 
@@ -275,6 +281,9 @@ int main(int argc , char* argv[])
 				{
 					close(readfd);
 					close(writefd);
+					free(tmp_buff);
+					free(buff);
+					buff = NULL;
 					break;
 				}
 			};
@@ -287,15 +296,18 @@ int main(int argc , char* argv[])
 				free(path_array[y]);
 				FreeList(&info[y]);
 			}
+
+			free(info);
 			// fprintf(f, "ANTE RE MEGALE");
 			free(path_array);
 			free(pid_ar);
 			free(name);
+			free(name2);
 			fclose(fp);
-			// fclose(f);
-			// free(log_name);
-			close(readfd);
-			close(writefd);
+				// fclose(f);
+				// free(log_name);
+			// close(readfd);
+			// close(writefd);
 			FreeTrie(&trie);		// eftiaxa to linfo
 			exit(0);
 		}
@@ -393,6 +405,7 @@ int main(int argc , char* argv[])
 			free(writefd_array);			//oute ayta ta xa
 			free(readfd_array);
 			free(tmp_buff);
+			free(buff);						//extra kai ayto
 			break;
 		}
 		else
@@ -598,7 +611,8 @@ int main(int argc , char* argv[])
 		printf("Waited for %d\n",pid);
 	}
 	free(name);
-	unlink(FIFO1);
+	free(name2);
+	// unlink(FIFO1);
 	// unlink(FIFO2);
 	fclose(fp);
 	free(pid_ar);
