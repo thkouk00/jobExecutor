@@ -33,6 +33,10 @@ void Usage(char *prog_name)			/* Usage */
 
 void catchsig(int signo)
 {
+	if (signo == SIGCLD)
+	{
+		// while (waitpid(-1,NULL,WNOHANG)>0);
+	}
 	if (signo == SIGUSR2)
 	{
 		stop = 1;
@@ -119,6 +123,7 @@ int main(int argc , char* argv[])
 	sigaction(SIGUSR1,&act,NULL);				//signal handler for SIGUSR1
 	sigaction(SIGUSR2,&act,NULL);				//signal handler for SIGUSR2
 	sigaction(SIGALRM,&act,NULL);
+	sigaction(SIGCHLD,&act,NULL);
 
 	int *pid_ar = malloc(sizeof(int)*W);
 	int n = 0;
@@ -144,12 +149,16 @@ int main(int argc , char* argv[])
 		if (!pid_ar[i])					// child process 
 		{
 			time_t curtime;
-			// time(&curtime);
 			char *time_buff;		//take time for log file
 			char *log_name = malloc(sizeof(char)*(strlen(LOG)+15));
 			sprintf(log_name, "%s%d.txt",LOG,getpid());
 			printf("LOG NAME %s\n", log_name);
 			FILE *f = fopen(log_name, "a");
+			if (f == NULL)
+			{
+				perror("Failed to open file\n");
+				exit(1);
+			}
 			char *name = malloc(sizeof(char)*(strlen(FIFO)+10));		//for reading
 			sprintf(name, "%s%d", FIFO,getpid());
 
@@ -157,7 +166,7 @@ int main(int argc , char* argv[])
 			sprintf(name2, "%s_2", name);
 
 			int num_of_paths;
-			if ((mkfifo(name, PERMS)<0))
+			if ((mkfifo(name, PERMS)<0))							// create pipes
 				perror("Error : creating FIFO\n");
 			if ((mkfifo(name2, PERMS)<0))
 				perror("Error : creating FIFO\n");
@@ -165,6 +174,9 @@ int main(int argc , char* argv[])
 			while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
 			while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0); 		// read number of paths 
 			
+			//na to elegxw ti pairnei gia na mi skasei kapoia stigmi , giati to bazw kateuthian se 
+			// metabliti (gia to read apo panw)
+
 			char **path_array = malloc(sizeof(char*)*num_of_paths);
 			char *tmp_buff = malloc(sizeof(char)*(max_chars));
 			for (y=0;y<num_of_paths;y++)
@@ -176,10 +188,7 @@ int main(int argc , char* argv[])
 			// close(readfd);
 			free(tmp_buff);
 			// one trie per Worker , one map per file
-			FILE *file;
-			int count_lines = 0;
-			int max = 0;
-			//list to hold maps and tries for every doc
+			//list to hold maps for every doc
 			listNode **info = malloc(sizeof(listNode*)*num_of_paths);	
 			trieNode_t *trie;
 			CreateTrie(&trie);
@@ -252,7 +261,9 @@ int main(int argc , char* argv[])
 						time(&curtime);
 						time_buff = ctime(&curtime);
 						time_buff[strlen(time_buff)-1] = '\0';
+						printf("GRAFW LOGFILE\n");
 						fprintf(f, "%s: wc: chars: %d words: %d lines: %d\n", time_buff,total[0],total[1],total[2]);
+						printf("EGRAPSA\n");
 						free(buff1);
 					}
 
@@ -268,15 +279,24 @@ int main(int argc , char* argv[])
 				}
 			};
 
+			fclose(f);
+			free(log_name);
+
 			for (y=0;y<num_of_paths;y++)
+			{
 				free(path_array[y]);
+				FreeList(&info[y]);
+			}
+			// fprintf(f, "ANTE RE MEGALE");
 			free(path_array);
 			free(pid_ar);
 			free(name);
 			fclose(fp);
-			fclose(f);
+			// fclose(f);
+			// free(log_name);
 			close(readfd);
 			close(writefd);
+			FreeTrie(&trie);		// eftiaxa to linfo
 			exit(0);
 		}
 		else
@@ -345,10 +365,8 @@ int main(int argc , char* argv[])
 			{	
 				valid = 1;
 				sprintf(tmp_buff, "%d",deadline);
-				printf("temp_buff2 is %s\n", temp_buff2);
 				memset(buff, 0, sizeof(char)*buff_size);
 				strncpy(buff, temp_buff2, strlen(temp_buff2)-strlen(tmp_buff)-4);
-				printf("BUFF %s.\n", buff);
 			}
 			else
 				printf("Wrong input try again\n");
@@ -370,7 +388,10 @@ int main(int argc , char* argv[])
 				//send -1 to stop child's loop
 				write(writefd_array[j], "-1", sizeof(char)*20);
 				close(writefd_array[j]);
+				close(readfd_array[j]);		//den to eixa katholoy
 			}
+			free(writefd_array);			//oute ayta ta xa
+			free(readfd_array);
 			free(tmp_buff);
 			break;
 		}
@@ -457,6 +478,13 @@ int main(int argc , char* argv[])
 					}
 				}
 				printf("Result from %d/%d workers!\n", workers_failed,W);
+				
+				for (int j=0;j<W;j++)
+				{
+					if (results[j]!=NULL)
+						free(results[j]);
+				}
+				free(results);
 			}
 			else if (valid == 2 || valid == 3)		//for max-mincount
 			{
@@ -470,7 +498,6 @@ int main(int argc , char* argv[])
 					
 					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
 
-					// char *word;
 					word = strtok(tmp_buff," |\0\n");
 					int length = atoi(word);			//mikos string poy perimenw
 					word = strtok(NULL," |\0\n");

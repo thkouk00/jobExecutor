@@ -32,7 +32,9 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 	word = strtok_r(buff,delimiter,&next1);					//htan buff1
 	word = strtok_r(NULL,delimiter,&next1);
 	alarm(deadline);
-	// sleep(1);
+	// if (getpid()%2 == 0)
+	// 	sleep(deadline);
+
 	while (word != NULL)
 	{	
 		find_word(trie, word, &result, NULL, 3);
@@ -56,7 +58,7 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 				{
 					word2 = strtok_r(NULL, "|",&next2);
 					if (word2 != NULL)
-						fprintf(f, " path: %s", word2);
+						fprintf(f, " : %s", word2);
 					else 
 						break;
 				}

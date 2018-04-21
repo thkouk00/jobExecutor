@@ -331,57 +331,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 	free(buffer);
 }
 
-
-//////////////////////////////////
-
-// // df takes zero or one argument
-// // zero arguments , df returns every word from index with the number of docs each word is in
-// // one argument , search and find if exist the given word and print the number of docs as above
-// void df(trieNode_t **root)
-// {
-// 	stackNode_t *head = NULL;
-// 	trieNode_t *tempNode = NULL;
-// 	trieNode_t *cur = NULL;
-// 	listNode *plist = NULL;
-// 	int times;
-// 	tempNode = *root;
-// 	if (tempNode->children == NULL)
-// 		printf("NO DATA\n");
-// 	else
-// 	{
-// 		tempNode = tempNode->children;
-// 		while (tempNode)									//use stack to traverse Trie and find every word
-// 		{
-// 			if (tempNode->neighbor)
-// 			{
-// 				push(&head, tempNode->neighbor);
-// 			}
-// 			if (tempNode->plist)
-// 			{
-// 				times = 0;
-// 				plist = tempNode->plist;
-// 				while (plist->next)
-// 				{
-// 					plist = plist->next;
-// 					times++;
-// 				}
-// 				printf("%s %d\n",tempNode->plist->name,times);
-// 			}
-// 			if (tempNode->children == NULL)
-// 			{
-// 				tempNode = pop(&head);
-// 				if (tempNode == NULL)
-// 					break;
-// 			}
-// 			else
-// 				tempNode = tempNode->children;
-// 		}
-// 	}
-
-// 	free(head);
-// }
-
-
 // free Trie structure
 // using stack structure
 void FreeTrie(trieNode_t **root)
@@ -390,6 +339,8 @@ void FreeTrie(trieNode_t **root)
 	trieNode_t *tempNode = NULL;
 	trieNode_t *cur = NULL;
 	tempNode = *root;
+	trie_list *t_cur;
+	trie_list *t_cur2;
 
 	while (tempNode->children)
 	{
@@ -416,11 +367,21 @@ void FreeTrie(trieNode_t **root)
 		}
 		else
 		{
-			// if (tempNode->plist != NULL)		//free posting list
-			// {	
-			// 	FreeList(&tempNode->plist);
-			// 	free(tempNode->plist);
-			// }
+
+			if (tempNode->plist != NULL)		//free posting list
+			{	
+				// FreeList(&tempNode->plist);
+				t_cur = tempNode->plist;
+				while (t_cur->next)
+				{
+					t_cur2 = t_cur->next;
+					t_cur->next = t_cur2->next;
+					free(t_cur2->name);
+					Free_lineInfo(&t_cur2->linfo);
+					free(t_cur2->linfo);
+				}
+				free(tempNode->plist);
+			}
 			free(tempNode);
 		}
 	}

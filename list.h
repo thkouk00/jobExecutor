@@ -35,9 +35,7 @@ typedef struct Line_info 			// holds info about line and offset , used in postin
 typedef struct Trie_list 			// posting list for trie , holds diffent info about keyword.
 {
 	char *name;
-	// int path_num;
 	int number_of_times;
-	// int *offset_array;
 	line_info *linfo;
 	struct Trie_list *next;
 }trie_list;
@@ -49,10 +47,10 @@ void print(listNode **);
 void length(listNode **);
 void FreeList(listNode **);
 
-// for /search
-void insert_search(list_t **, int, int);
-void print_search(list_t **);
-void FreeList_search(list_t **);
+// // for /search
+// void insert_search(list_t **, int, int);
+// void print_search(list_t **);
+// void FreeList_search(list_t **);
 
 // struct for line info (offset-line)
 void insert_lineInfo(line_info **,int , long );

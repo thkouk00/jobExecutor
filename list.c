@@ -23,7 +23,7 @@ void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array
 	n->name = malloc(sizeof(char)*(strlen(name)+2));
 	strncpy(n->name, name,strlen(name)+1); //htan +1
 	n->name[strlen(name)+2] = '\0';
-	// printf("NAME %s and len %ld\n", n->name,strlen(name));
+	
 	n->lines = lines;
 	n->max_chars = max_chars;
 	n->map = malloc(sizeof(char*)*lines);
@@ -32,7 +32,7 @@ void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array
 	
 	memcpy(n->offset_array, offset_array, sizeof(int)*num_of_elements); 
 	n->next = NULL;
-	// printf("INSERT NAME ->%s and %s\n", n->name,name);
+	
 	while (cur->next)
 		cur = cur->next;
 	cur->next = n;
@@ -111,6 +111,8 @@ void FreeList(listNode **head)
 	if (*head != NULL)
 	{
 		free((*head)->name);
+		free((*head)->offset_array);
+		//free map prepei
 		while (cur->next != NULL)
 		{
 			temp = cur->next;
@@ -141,7 +143,6 @@ void insert_lineInfo(line_info **head,int line, long offset)
 			flag = 1;
 			break;
 		}
-		// printf("Line %d - ofs %ld\n",cur->line,cur->offset);
 	}
 	if (!flag)
 	{
@@ -182,8 +183,9 @@ void Free_lineInfo(line_info **head)	//thelei ftiaximo
 	line_info *tmp;
 	while (cur->next)
 	{
-		cur = cur->next;
 		tmp = cur->next;
+		cur->next = tmp->next;
+		free(tmp);
 	}
 }
 
@@ -201,9 +203,7 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 {
 	if (*head == NULL)
 	{
-		// printf("EIMAI STO PLIST\n");
 		*head = Create_Plist(head);
-		// printf("GOT %p \n",*head);
 	}
 	trie_list *cur = *head;
 	trie_list *cur1 = *head;
@@ -214,7 +214,6 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 		cur = cur->next;
 		if (!strcmp(cur->name, name))
 		{
-			// printf("YPARXEI PLIST %s\n",cur->name);
 			flag = 1;
 			cur->number_of_times++;
 			insert_lineInfo(&(cur->linfo), line, offset);
@@ -223,21 +222,15 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 	}
 	if (!flag)
 	{
-		// printf("->%s\n",name);
 		trie_list *temp = (trie_list*)malloc(sizeof(struct Trie_list));
 		temp->name = malloc(sizeof(char)*(strlen(name)));
 		strncpy(temp->name,name,strlen(name));
 		temp->name[strlen(name)] = '\0';
-		// printf("PLIST %s\n", temp->name);
 		temp->linfo = NULL;
-		// printf("NAMEinPLIST %s\n", temp->name);
-		// temp->path_num = path_num;
 		temp->number_of_times = 1;
 		insert_lineInfo(&(temp->linfo), line, offset);
 		temp->next = cur1->next;
 		cur1->next = temp;
-
-
 	}
 
 }
@@ -255,7 +248,27 @@ int length_plist(trie_list **head)
 }
 
 void print_plist(trie_list **);
-void Free_plist(trie_list **);
+// void Free_plist(trie_list **head)
+// {
+// 	trie_list *cur = *head;
+// 	trie_list *cur2 = *head;
+// 	while (cur->next)
+// 	{
+// 		cur2 = cur->next;
+// 		free(cur2->name);
+// 		line_info *temp = cur2->linfo;
+// 		line_info *temp2;
+// 		while (temp->next)
+// 		{
+// 			temp2 = temp->next;
+// 			temp->next = temp2->next;
+// 			free(temp2);
+// 		}
+// 		free(temp);
+// 		cur->next = cur2->next;
+// 		free(cur2);
+// 	}
+// }
 
 
 
