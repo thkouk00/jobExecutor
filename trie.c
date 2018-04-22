@@ -84,7 +84,8 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 	// tempNode->endofword = 1;			//axriasto , mono sthn print to exw valei alla mporw na to vgalw
 	trie_list *cur = tempNode->plist;
 	insert_to_plist(&(tempNode->plist), name, line_num, offset);
-	
+	// insert_to_plist(&cur, name, line_num, offset);
+	// printf("OUT OF AddNode %d\n", getpid());
 }
 
 // print word if exists in trie , else print "not found"

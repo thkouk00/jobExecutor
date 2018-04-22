@@ -1,6 +1,6 @@
 #include "send_msg.h"
 
-void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid , int *modulo , int *temp_lines , int *dirs_per_worker , int *tmp_mod)
+void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid ,int *paths_to_pid, int *modulo , int *temp_lines , int *dirs_per_worker , int *tmp_mod,int lines)
 {
 	int writefd , num_of_paths;
 	int y;
@@ -27,12 +27,20 @@ void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid , int *mod
 		getline(&buff,&buff_size,*fp);
 		buff[strlen(buff)-1] = '\0';
 
-		// printf("PARENT->%s\n",buff);
+		printf("PARENT->%s\n",buff);
 		write(writefd, buff, sizeof(char)*max_chars); 
 		*temp_lines-=1;
 		free(buff);
 		buff = NULL;
 		buff_size = 0;
+		// for (int k=0;k<lines;k++)
+		// {
+		// 	if (paths_to_pid[k] == -1)
+		// 	{
+		// 		paths_to_pid[k] = pid;
+		// 		break;
+		// 	}
+		// }
 	}
 	close(writefd);
 	// printf("Just finish sending paths temp_lines %d\n",*temp_lines);

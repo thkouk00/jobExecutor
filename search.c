@@ -29,8 +29,9 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 	char delimiter[] = " \n\0";
 	word = strtok_r(buff,delimiter,&next1);					//htan buff1
 	word = strtok_r(NULL,delimiter,&next1);
+	
 	alarm(deadline);
-	// if (getpid()%2 == 0)
+	// if (getpid()%2 == 0)						// to chech ta sigalarm works
 	// 	sleep(deadline);
 
 	while (word != NULL)

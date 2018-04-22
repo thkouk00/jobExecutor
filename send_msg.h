@@ -13,6 +13,6 @@
 
 #define FIFO "/home/thanos/Desktop/fifo"
 
-void send_msg(FILE **,char*,char *,int ,int , int* , int* , int* , int* );
+void send_msg(FILE **,char*,char *,int ,int , int *,int* , int* , int* , int* ,int);
 
 #endif

@@ -16,31 +16,48 @@ void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array
 	if (*head == NULL)
 	{
 		*head = CreateList(head);
+		// printf("HEAD CREATED %p\n", *head);
 	}
 	listNode *cur = *head;
+	// if ((*head)==NULL)
+	// 	printf("HEAD NULL\n");
+	// printf("HEAD is %p\n", (*head));
+	// if ((*head)->next)
+	// 	printf("next is null\n");
 
 	listNode *n = (listNode*)malloc(sizeof(struct list));
 	n->name = malloc(sizeof(char)*(strlen(name)+2));
 	strncpy(n->name, name,strlen(name)+1); //htan +1
 	n->name[strlen(name)+2] = '\0';
-	
+	// printf("Name:%s\n", n->name);
 	n->lines = lines;
 	n->max_chars = max_chars;
 	n->map = malloc(sizeof(char*)*lines);
 
 	n->offset_array = malloc(sizeof(int)*(num_of_elements));
-	
+	// printf("BEFOREMEMCPY %d\n", getpid());
 	memcpy(n->offset_array, offset_array, sizeof(int)*num_of_elements); 
+	// printf("AFTERMEMCPY %d\n", getpid());
 	n->next = NULL;
-	
-	while (cur->next)
+	// printf("CUR %p and head %p\n", cur,*head);
+	// if (cur->next == NULL)
+	// 	printf("EINAI GAMIMENO NULL\n");
+	while (cur->next != NULL)
+	{
 		cur = cur->next;
+		// printf("WHILE %s\n", cur->name);
+	}
 	cur->next = n;
+	// printf("END INSERT\n");
+	// n->next = cur->next;
+	// cur->next = n;
+	// printf("AFTERMEMCPY %d\n", getpid());
 }
 
 
 void fill_trie(listNode **head,trieNode_t **root)
 {
+	// printf("FILLTRIE %d\n", getpid());
 	listNode *cur = *head;
 	char *str;
 	char *str1;
@@ -52,6 +69,7 @@ void fill_trie(listNode **head,trieNode_t **root)
 		while (cur->next)
 		{
 			cur = cur->next; 
+			// printf("I AM IN:\n%s\n",cur->name);
 			str = malloc(sizeof(char)*(cur->max_chars+1));
 			for (int i =0;i<cur->lines;i++)
 			{
@@ -66,6 +84,7 @@ void fill_trie(listNode **head,trieNode_t **root)
 			free(str);
 		}
 	}
+	// printf("FILLTRIE ENDED %d\n", getpid());
 }
 
 void print(listNode **head)
