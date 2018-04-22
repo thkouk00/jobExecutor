@@ -26,6 +26,7 @@
 #define LOG "/home/thanos/Desktop/log/Worker_"
 #define PERMS 0666
 
+static volatile sig_atomic_t triggered = 0;
 static volatile sig_atomic_t stop = 0;
 
 void Usage(char *prog_name)			/* Usage */
@@ -37,8 +38,8 @@ void catchsig(int signo)
 {
 	if (signo == SIGCLD)
 	{
-		// int pid;
-		// while ((pid = waitpid(-1,NULL,WNOHANG))>0);
+		int pid;
+		while ((pid = waitpid(-1,NULL,WNOHANG))>0);
 		// write(1,"**CHILD DIED**\n",sizeof(char)*strlen("**CHILD DIED**"));
 	}
 	if (signo == SIGUSR2)
@@ -90,7 +91,7 @@ int main(int argc , char* argv[])
 	struct dirent *entry;
 	int lines = 0;
 	int x , max_chars = 0;
-	
+	int **number_of_paths;
 	while ((x=getline(&buff,&buff_size,fp))>0)
 	{
 		if (x>max_chars)
@@ -184,7 +185,7 @@ int main(int argc , char* argv[])
 
 	// parent process
 	// take user queries and route them to workers
-	user_query(W,pid_ar,readfd_array,writefd_array);
+	user_query(W,pid_ar,readfd_array,writefd_array,paths_to_pid,name,name2,lines,max_chars,fp);
 
 	//end of program
 	free(paths_to_pid);

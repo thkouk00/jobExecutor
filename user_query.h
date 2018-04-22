@@ -21,7 +21,10 @@
 #include "maxcount.h"
 #include "wc.h"
 #include "search.h"
+#include "worker.h"
 
-void user_query(int ,int *,int *, int *);
+#define FIFO "/home/thanos/Desktop/fifo"
+
+void user_query(int ,int *,int *, int *, int*,char **,char **,int,int ,FILE *);
 
 #endif

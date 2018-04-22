@@ -1,5 +1,7 @@
 #include "worker.h"
 
+static volatile sig_atomic_t triggered = 0;
+
 void catchsignal(int signo)
 {
 	if (signo == SIGCLD)
@@ -8,6 +10,11 @@ void catchsignal(int signo)
 	}
 	if (signo == SIGALRM)
 		write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
+	if (signo == SIGTERM)
+	{
+		triggered = 1;
+		write(1, "ME SKOTOSAN\n", sizeof(char)*strlen("ME SKOTOSAN\n"));
+	}
 }
 
 void worker(int max_chars,FILE *fp,int *pid_ar)
@@ -16,14 +23,15 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	act.sa_handler = catchsignal;
 	sigfillset(&(act.sa_mask));
 	sigaction(SIGALRM,&act,NULL);
-	sigaction(SIGCHLD,&act,NULL);
+	// sigaction(SIGCHLD,&act,NULL);
 	sigaction(SIGUSR1,&act,NULL);
+	sigaction(SIGTERM,&act,NULL);
 
 	time_t curtime;
 	char *time_buff;		//take time for log file
 	char *log_name = malloc(sizeof(char)*(strlen(LOG)+15));
 	sprintf(log_name, "%s%d.txt",LOG,getpid());
-	printf("LOG NAME %s\n", log_name);
+	// printf("LOG NAME %s\n", log_name);
 	FILE *f = fopen(log_name, "a");
 	if (f == NULL)
 	{
@@ -45,6 +53,7 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 
 	while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
 	while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0); 		// read number of paths 
+	// printf("NUMOFPAATHS %d\n",num_of_paths);
 
 	//na to elegxw ti pairnei gia na mi skasei kapoia stigmi , giati to bazw kateuthian se 
 	// metabliti (gia to read apo panw)
@@ -85,10 +94,16 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	while ((writefd = open(name2, O_WRONLY|O_NONBLOCK))<0);
 	while(1)			// htan !stop
 	{
+		if (triggered)
+			write(writefd, "~", sizeof(char)*2);		//SIGTERM raised
+		else
+			write(writefd, "^", sizeof(char)*2);
+
 		pause(); 			//wait for SIGUSR1 to wake up and continue execution 
-		// read query from jobExecutor
+
 		while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
 		size_to_read = atoi(tmp_buff);
+		// read query from jobExecutor
 		if (size_to_read != -1)
 		{
 			buff = malloc(sizeof(char)*(size_to_read)+1);	//htan size to read +1

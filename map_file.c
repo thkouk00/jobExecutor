@@ -2,7 +2,6 @@
 
 void map_file(FILE *file,listNode **info,char *filename)
 {
-	// printf("IN MAP\n");
 	listNode *cur = *info;
 	int x,i=0;
 	while (cur->next)
@@ -29,8 +28,6 @@ void map_file(FILE *file,listNode **info,char *filename)
 			cur->map[i] = malloc(sizeof(char)*(strlen(buff)+1));
 			strncpy(cur->map[i], buff, strlen(buff));
 		}
-		// printf("MAP:%s\n", buff);
-
 	}
 	free(buff);
 }

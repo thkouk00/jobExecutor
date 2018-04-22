@@ -1,14 +1,83 @@
 #include "user_query.h"
 
-void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array)
+void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *paths_to_pid,char **name,char **name2,int lines,int max_chars,FILE *fp)
 {
+	int *killed_child = malloc(sizeof(int)*W);
 	while(1)
 	{
-		int x , n;
+		int x , n , i;
 		char *tmp_buff = malloc(sizeof(char)*20);		//buffer to hold number of chars to sent to child
 		char *temp_buff2;								// helper buffer
 		char *buff = NULL;
 		size_t buff_size;
+		int old_pid , kill_flag = 0;
+		int path_count=0;
+		for (i=0;i<W;i++)
+		{
+			while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0);
+			if (!strcmp(tmp_buff,"~"))
+			{
+				// printf("IN HEREEE\n");
+				// free memory from killed child
+				kill(pid_ar[i],SIGUSR1);							
+				write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
+				close(writefd_array[i]);
+				close(readfd_array[i]);	
+				// free(name[i]);			//den xreiazete na ginei free
+				// free(name2[i]);
+				old_pid = pid_ar[i];
+				
+				pid_ar[i] = fork();					//fork new child
+				if (!pid_ar[i])
+					worker(max_chars, fp, pid_ar);
+				else
+				{
+					for (int j=0;j<lines;j++)
+					{
+						if (paths_to_pid[j] == old_pid)
+						{
+							paths_to_pid[j] = pid_ar[i];
+							path_count++;
+						}
+					}
+					sprintf(name[i], "%s%d", FIFO,pid_ar[i]);
+					sprintf(name2[i], "%s_2",name[i]);	
+					while ((writefd_array[i] = open(name[i],O_WRONLY|O_NONBLOCK))<0);
+					while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
+					write(writefd_array[i], &path_count, sizeof(int));
+					fseek(fp, 0, SEEK_SET);
+					for (int j=0;j<lines;j++)
+					{
+						getline(&buff,&buff_size,fp);
+						if (paths_to_pid[j] == pid_ar[i])
+						{
+							if (buff[strlen(buff)-1] == '\n')		//axreiasto edw logika
+								buff[strlen(buff)-1] = '\0';	
+							// printf("BUFF IS:\n%s.\n",buff);		
+							write(writefd_array[i], buff, sizeof(char)*max_chars); 
+						}
+						free(buff);
+						buff = NULL;
+					}	
+					free(buff);
+					buff = NULL;
+					fseek(fp, 0, SEEK_SET);
+					kill_flag = 1;
+					while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0);
+				}
+				//fork new child
+				//send killed child paths to new child
+				
+			}
+			else if (!strcmp(tmp_buff,"^"))
+			{
+				continue;//zontano
+			}
+		}
+		// if (kill_flag)
+		// {
+		// 	while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
+		// }
 		printf("Give input:\n");
 		while ((x=getline(&buff,&buff_size,stdin))<=0);
 		char delimiter[] = " \t\n";
@@ -20,6 +89,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array)
 		int exit_flag = 0;
 		int final_num; 					//used in max/mincount
 		int deadline = -1;				//used for search
+
 
 		if (!strncmp(txt, "/search", strlen("/search")+1))
 		{
