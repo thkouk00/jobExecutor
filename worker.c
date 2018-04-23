@@ -51,9 +51,11 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	if ((mkfifo(name2, PERMS)<0))
 		perror("Error : creating FIFO\n");
 
-	while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0);
-	while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0); 		// read number of paths 
-	// printf("NUMOFPAATHS %d\n",num_of_paths);
+	while ((readfd = open(name, O_RDONLY|O_NONBLOCK))<0)
+		usleep(2000);
+	while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0) 		// read number of paths 
+		usleep(2000);
+	// printf("NUMOFPAATHS %d %d\n",num_of_paths,getpid());
 
 	//na to elegxw ti pairnei gia na mi skasei kapoia stigmi , giati to bazw kateuthian se 
 	// metabliti (gia to read apo panw)
@@ -62,9 +64,11 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	char *tmp_buff = malloc(sizeof(char)*(max_chars));
 	for (y=0;y<num_of_paths;y++)
 	{
-		while ((n=read(readfd,tmp_buff, sizeof(char)*(max_chars)))<=0);
-		path_array[y] = malloc(sizeof(char)*(strlen(tmp_buff)+1));
+		while ((n=read(readfd,tmp_buff, sizeof(char)*(max_chars)))<=0)
+			usleep(2000);
+		path_array[y] = malloc(sizeof(char)*(strlen(tmp_buff)+1));	//htan +1
 		strncpy(path_array[y], tmp_buff , strlen(tmp_buff));
+		path_array[y][strlen(tmp_buff)] = '\0';
 	}
 	// close(readfd);
 	free(tmp_buff);
@@ -73,6 +77,10 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	listNode **info = malloc(sizeof(listNode*)*num_of_paths);	
 	trieNode_t *trie;
 	CreateTrie(&trie);
+
+	// printf("**PATHS for %d::\n",getpid());
+	// for (y=0;y<num_of_paths;y++)
+	// 	printf("%s.\n", path_array[y]);
 
 	int *offset_array ;
 	for (y=0;y<num_of_paths;y++)
@@ -91,7 +99,8 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 
 	//worker must wait for message from jobExecutor for queries
 	// printf("---WORKER---%s\n",name2);
-	while ((writefd = open(name2, O_WRONLY|O_NONBLOCK))<0);
+	while ((writefd = open(name2, O_WRONLY|O_NONBLOCK))<0)
+		usleep(2000);
 	while(1)			// htan !stop
 	{
 		if (triggered)
@@ -101,17 +110,20 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 
 		pause(); 			//wait for SIGUSR1 to wake up and continue execution 
 
-		while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
+		while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0)
+			usleep(2000);
 		size_to_read = atoi(tmp_buff);
 		// read query from jobExecutor
 		if (size_to_read != -1)
 		{
 			buff = malloc(sizeof(char)*(size_to_read)+1);	//htan size to read +1
-			while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0);
+			while ((n=read(readfd,buff, sizeof(char)*size_to_read))<=0)
+				usleep(2000);
 			buff[size_to_read] = '\0';
 			if (!strncmp(buff, "/search ", strlen("/search ")))
 			{
-				while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0);
+				while ((n=read(readfd,tmp_buff, sizeof(char)*20))<=0)
+					usleep(2000);
 				int deadline = atoi(tmp_buff);
 				// printf("RECEIVE %s and deadline %d\n", buff,deadline);
 				search(&trie,buff,name2,writefd,f,deadline);

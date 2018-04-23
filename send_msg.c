@@ -20,7 +20,8 @@ void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid ,int *path
 	}
 	else
 		num_of_paths = *dirs_per_worker;
-	while ((writefd = open(name,O_WRONLY|O_NONBLOCK))<0);
+	while ((writefd = open(name,O_WRONLY|O_NONBLOCK))<0)
+		usleep(2000);
 	write(writefd, &num_of_paths, sizeof(int));		//inform child how many paths to wait
 	for (y=0;y<num_of_paths;y++)
 	{

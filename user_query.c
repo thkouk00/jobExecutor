@@ -2,6 +2,7 @@
 
 void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *paths_to_pid,char **name,char **name2,int lines,int max_chars,FILE *fp)
 {
+	int wrong_input = 0;
 	int *killed_child = malloc(sizeof(int)*W);
 	while(1)
 	{
@@ -12,66 +13,76 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		size_t buff_size;
 		int old_pid , kill_flag = 0;
 		int path_count=0;
-		for (i=0;i<W;i++)
+		if (!wrong_input)
 		{
-			while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0);
-			if (!strcmp(tmp_buff,"~"))
+			for (i=0;i<W;i++)
 			{
-				// printf("IN HEREEE\n");
-				// free memory from killed child
-				kill(pid_ar[i],SIGUSR1);							
-				write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
-				close(writefd_array[i]);
-				close(readfd_array[i]);	
-				// free(name[i]);			//den xreiazete na ginei free
-				// free(name2[i]);
-				old_pid = pid_ar[i];
-				
-				pid_ar[i] = fork();					//fork new child
-				if (!pid_ar[i])
-					worker(max_chars, fp, pid_ar);
-				else
+				while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
+					usleep(2000);
+				if (!strcmp(tmp_buff,"~"))
 				{
-					for (int j=0;j<lines;j++)
+					// printf("IN HEREEE\n");
+					// free memory from killed child
+					kill(pid_ar[i],SIGUSR1);							
+					write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
+					close(writefd_array[i]);
+					close(readfd_array[i]);	
+					
+					old_pid = pid_ar[i];
+					
+					pid_ar[i] = fork();					//fork new child
+					if (!pid_ar[i])
+						worker(max_chars, fp, pid_ar);
+					else
 					{
-						if (paths_to_pid[j] == old_pid)
+						path_count = 0;
+						for (int j=0;j<lines;j++)
 						{
-							paths_to_pid[j] = pid_ar[i];
-							path_count++;
+							if (paths_to_pid[j] == old_pid)
+							{
+								paths_to_pid[j] = pid_ar[i];
+								path_count++;
+							}
 						}
-					}
-					sprintf(name[i], "%s%d", FIFO,pid_ar[i]);
-					sprintf(name2[i], "%s_2",name[i]);	
-					while ((writefd_array[i] = open(name[i],O_WRONLY|O_NONBLOCK))<0);
-					while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
-					write(writefd_array[i], &path_count, sizeof(int));
-					fseek(fp, 0, SEEK_SET);
-					for (int j=0;j<lines;j++)
-					{
-						getline(&buff,&buff_size,fp);
-						if (paths_to_pid[j] == pid_ar[i])
+						unlink(name[i]);
+						unlink(name2[i]);
+						sprintf(name[i], "%s%d", FIFO,pid_ar[i]);
+						sprintf(name2[i], "%s_2",name[i]);	
+						while ((writefd_array[i] = open(name[i],O_WRONLY|O_NONBLOCK))<0)
+							usleep(2000);
+						while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0)
+							usleep(2000);
+						write(writefd_array[i], &path_count, sizeof(int));
+						fseek(fp, 0, SEEK_SET);
+						for (int j=0;j<lines;j++)
 						{
-							if (buff[strlen(buff)-1] == '\n')		//axreiasto edw logika
+							getline(&buff,&buff_size,fp);
+							if (paths_to_pid[j] == pid_ar[i])
+							{
+								// if (buff[strlen(buff)-1] == '\n')		
+								// 	buff[strlen(buff)-1] = '\0';
 								buff[strlen(buff)-1] = '\0';	
-							// printf("BUFF IS:\n%s.\n",buff);		
-							write(writefd_array[i], buff, sizeof(char)*max_chars); 
-						}
+								// printf("BUFF IS:\n%s.\n",buff);		
+								write(writefd_array[i], buff, sizeof(char)*max_chars); 
+							}
+							free(buff);
+							buff = NULL;
+						}	
 						free(buff);
 						buff = NULL;
-					}	
-					free(buff);
-					buff = NULL;
-					fseek(fp, 0, SEEK_SET);
-					kill_flag = 1;
-					while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0);
+						fseek(fp, 0, SEEK_SET);
+						kill_flag = 1;
+						while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
+							usleep(2000);
+					}
+					//fork new child
+					//send killed child paths to new child
+					
 				}
-				//fork new child
-				//send killed child paths to new child
-				
-			}
-			else if (!strcmp(tmp_buff,"^"))
-			{
-				continue;//zontano
+				else if (!strcmp(tmp_buff,"^"))
+				{
+					continue;//zontano
+				}
 			}
 		}
 		// if (kill_flag)
@@ -91,7 +102,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		int deadline = -1;				//used for search
 
 
-		if (!strncmp(txt, "/search", strlen("/search")+1))
+		if (!strncmp(txt, "/search", strlen("/search")+1) && strlen(buff)>13)
 		{
 			char *word2;
 			deadline = -1;
@@ -127,7 +138,11 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				strncpy(buff, temp_buff2, strlen(temp_buff2)-strlen(tmp_buff)-4);
 			}
 			else
+			{
+				valid = 0;
+				wrong_input = 1;
 				printf("Wrong input try again\n");
+			}
 			free(temp_buff2);
 		}
 		else if (!strncmp(txt, "/maxcount", strlen("/maxcount")+1))
@@ -155,10 +170,13 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 			break;
 		}
 		else
+		{
+			wrong_input = 1;
 			printf("Wrong input try again\n");
+		}
 		if (valid)
 		{
-			
+			wrong_input = 0;
 			// sprintf(tmp_buff, "%ld",strlen(buff));
 			txt = NULL;
 			for (int j=0;j<W;j++)				//send query to workers
@@ -188,13 +206,15 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				for (int j=0;j<W;j++)
 				{
 					
-					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0)
+						usleep(2000);
 					word = strtok(tmp_buff, " \0\n");
 					int length = atoi(word);
 					if (length != -1)
 					{
 						temp_buff2 = malloc(sizeof(char)*length); 
-						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
+						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0)
+							usleep(2000);
 						results[j] = malloc(sizeof(char)*length);
 						strcpy(results[j], temp_buff2);
 						free(temp_buff2);
@@ -254,7 +274,8 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				{
 					memset(tmp_buff, 0, sizeof(char)*20);  //reset memory space
 					
-					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0)
+						usleep(2000);
 
 					word = strtok(tmp_buff," |\0\n");
 					int length = atoi(word);			//mikos string poy perimenw
@@ -266,7 +287,8 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 						int t_num = 0;
 						
 						temp_buff2 = malloc(sizeof(char)*(length));
-						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0);
+						while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*length))<=0)
+							usleep(2000);
 						word = strtok(temp_buff2,"|\0\n");
 						t_num = atoi(word);
 						if (valid == 2 && t_num > final_num)
@@ -318,10 +340,12 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				int total_stats[3] = {0};
 				for (int j=0;j<W;j++)
 				{
-					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0);
+					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0)
+						usleep(2000);
 					int length = atoi(tmp_buff);
 					temp_buff2 = malloc(sizeof(char)*length);
-					while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*(length)))<=0);
+					while ((n=read(readfd_array[j],temp_buff2, sizeof(char)*(length)))<=0)
+						usleep(2000);
 					word = strtok(temp_buff2, "|\n\0");
 					total_stats[0] += atoi(word);
 					for (int k=1;k<3;k++)

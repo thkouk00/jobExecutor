@@ -38,8 +38,7 @@ void catchsig(int signo)
 {
 	if (signo == SIGCLD)
 	{
-		int pid;
-		while ((pid = waitpid(-1,NULL,WNOHANG))>0);
+		while ((waitpid(-1,NULL,WNOHANG))>0);
 		// write(1,"**CHILD DIED**\n",sizeof(char)*strlen("**CHILD DIED**"));
 	}
 	if (signo == SIGUSR2)
@@ -145,10 +144,6 @@ int main(int argc , char* argv[])
 		name2[i] = malloc(sizeof(char)*(strlen(FIFO)+12));
 	}
 	
-	// create named piped for communication between parent-child
-	// if ((mkfifo(FIFO1,PERMS) < 0))				// read : parent <--> write : child
-	// 	perror("PARENT cant create FIFO1\n");
-	
 	int readfd , writefd , status;
 	for (i=0;i<W;i++)
 	{
@@ -171,16 +166,15 @@ int main(int argc , char* argv[])
 			send_msg(&fp,name[i],name2[i],max_chars,pid_ar[i],paths_to_pid,&modulo, &temp_lines,&dirs_per_worker,&tmp_mod,lines);
 		}
 	}
-
-	// for (i=0;i<lines;i++)
-	// 	printf("PtoPID i:%d me %d\n", i,paths_to_pid[i]);
 	
 	int *writefd_array = malloc(sizeof(int)*W);
 	int *readfd_array = malloc(sizeof(int)*W);
 	for (i=0;i<W;i++)								//pipes ready for use
 	{
-		while ((writefd_array[i] = open(name[i],O_WRONLY|O_NONBLOCK))<0);
-		while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
+		while ((writefd_array[i] = open(name[i],O_WRONLY|O_NONBLOCK))<0)
+			usleep(2000);
+		while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0)
+			usleep(2000);
 	}
 
 	// parent process
@@ -201,8 +195,6 @@ int main(int argc , char* argv[])
 	}
 	free(name);
 	free(name2);
-	// unlink(FIFO1);
-	// unlink(FIFO2);
 	fclose(fp);
 	free(pid_ar);
 	printf("~End of parent!~\n");

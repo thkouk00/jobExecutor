@@ -6,6 +6,7 @@ void catchsigd(int signo)
 {
 	if (signo == SIGALRM)
 	{
+		write(1, "**ALARM**\n",sizeof(char)*strlen("**ALARM**\n"));
 		stop = 1;
 	}
 }
@@ -30,10 +31,11 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 	word = strtok_r(buff,delimiter,&next1);					//htan buff1
 	word = strtok_r(NULL,delimiter,&next1);
 	
+		
 	alarm(deadline);
-	// if (getpid()%2 == 0)						// to chech ta sigalarm works
-	// 	sleep(deadline);
-
+	// if (getpid()%2 == 0)						// to check that sigalarm works
+	// 	// usleep(1000*(deadline+1));
+	// 	sleep(1);
 	while (word != NULL)
 	{	
 		find_word(trie, word, &result, NULL, 3);
@@ -77,6 +79,7 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 		word = strtok_r(NULL,delimiter,&next1);
 	}
 	alarm(0);
+	
 	if (stop)
 	{
 		sprintf(size_buff, "-1");

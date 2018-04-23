@@ -228,7 +228,7 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 	}
 	buffer[i] = '\0'; 	
 	
-	if (!strncmp(buffer, str,strlen(str))) 
+	if (!strncmp(buffer, str,strlen(str)) && tempNode->plist!=NULL) 
 	{
 		char *name1=NULL;
 		int count;
