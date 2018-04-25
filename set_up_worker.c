@@ -9,13 +9,13 @@ void set_up_worker(listNode **info,char *path_array)
 	int count_lines = 0;
 	int *offset_array;
 	char *buff=NULL;
+	int *realloc_buff=NULL;
 	size_t buff_size;
 
 	dp = opendir(path_array);
 	if (dp == NULL)
 		fprintf(stderr, "ERROR in open directory\n");
-	// printf("%s:\n",path_array);
-	while ((entry = readdir(dp)) != NULL)
+	while ((entry = readdir(dp)) != NULL)		//take every text file from directory
 	{
 
 		if (!strcmp(entry->d_name,".") || !strcmp(entry->d_name,".."))
@@ -43,7 +43,11 @@ void set_up_worker(listNode **info,char *path_array)
 			else
 			{
 				tmp_size +=tmp_size;
-				offset_array = realloc(offset_array, sizeof(int)*(tmp_size));
+				realloc_buff = realloc(offset_array, sizeof(int)*(tmp_size));
+				if (realloc_buff != NULL)
+					offset_array = realloc_buff;
+				else
+					printf("REALLOC FAILED\n");
 				offset_array[pos] = count;
 				pos++;
 			}
@@ -57,12 +61,12 @@ void set_up_worker(listNode **info,char *path_array)
 		free(buff);				//extra
 		buff = NULL;
 		fseek(file, 0, SEEK_SET);
-		pos--;	 // arxika htan katw apo to insert
+		pos--;	 
 		insert(info,filename,count_lines,max,offset_array,pos);	
 		map_file(file,info,filename);				//function to map file
 		fclose(file);
 		free(filename);
-		free(offset_array);		//extr
+		free(offset_array);		//extra
 	}
 	closedir(dp);
 }

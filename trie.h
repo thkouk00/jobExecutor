@@ -13,7 +13,6 @@ typedef struct trie{
 	struct trie* children;
 	struct trie* neighbor;
 	trie_list* plist;
-	short endofword;
 }trieNode_t;
 
 void CreateTrie(trieNode_t **);

@@ -21,13 +21,12 @@
 #include "search.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
-#define FIFO1 "/home/thanos/Desktop/fifo1"
-#define FIFO2 "/home/thanos/Desktop/fifo2"
 #define LOG "/home/thanos/Desktop/log/Worker_"
 #define PERMS 0666
 
-static volatile sig_atomic_t triggered = 0;
+// static volatile sig_atomic_t triggered = 0;
 static volatile sig_atomic_t stop = 0;
+// static volatile sig_atomic_t end = 0;
 
 void Usage(char *prog_name)			/* Usage */
 {
@@ -36,18 +35,19 @@ void Usage(char *prog_name)			/* Usage */
 
 void catchsig(int signo)
 {
-	if (signo == SIGCLD)
+	if (signo == SIGCHLD)
 	{
 		while ((waitpid(-1,NULL,WNOHANG))>0);
-		// write(1,"**CHILD DIED**\n",sizeof(char)*strlen("**CHILD DIED**"));
-	}
-	if (signo == SIGUSR2)
-	{
-		stop = 1;
-		write(1, "Stop value changed", sizeof(char)*strlen("Stop value changed"));
 	}
 	if (signo == SIGALRM)
-		write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
+	{
+		// write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
+	}
+	// if (signo == SIGINT)
+	// {
+	// 	// end = 1;
+	// 	// write(1, "Alarm finished", sizeof(char)*strlen("Alarm finished"));
+	// }
 }
 
 int *paths_to_pid; //keep track of paths , every cell has a pid
@@ -70,6 +70,11 @@ int main(int argc , char* argv[])
 			if (!strcmp(argv[i],"-d"))
 			{
 				fp = fopen(argv[i+1], "r");
+				if (fp == NULL)
+				{
+					perror("ERROR , cannot open file.\n");
+					exit(1);
+				}
 				doc_flag = 1;
 			}
 			else if (!strcmp(argv[i],"-w"))
@@ -95,40 +100,35 @@ int main(int argc , char* argv[])
 	{
 		if (x>max_chars)
 			max_chars = x;
-		// if (buff[strlen(buff)-1] == '\n')		//axreiasto edw logika
-		// 	buff[strlen(buff)-1] = '\0';
-
 		free(buff);
 		buff = NULL;
 		buff_size = 0;
 		file_count = 0;
 		lines++;
 	};
-	free(buff);							//auto edw to free ekana extra gia 10/10
+	free(buff);							
 	buff = NULL;
 	printf("Lines %d\n",lines);
 	
 	int temp_lines = lines;		
-	int num_of_paths = 0 ;		//before sent msg to child, holds number of paths to sent
+	int num_of_paths = 0 ;				//before sent msg to child, holds number of paths to sent
 	fseek(fp, 0, SEEK_SET);
 	if (W>lines)
-		W = lines;
+		W = lines;						//adjust workers to paths given
 	int dirs_per_worker = lines/W;
 	int modulo = lines%W;
 	if (modulo != 0)
 		dirs_per_worker++;
 	int tmp_mod = modulo;
-	printf("dirs_per_worker %d and workers %d\n",dirs_per_worker,W);
-	// fclose(fp);	
-
+	
 	static struct sigaction act;
 	act.sa_handler = catchsig;
-	// act.sa_handler = SIG_IGN;
 	sigfillset(&(act.sa_mask));
-	sigaction(SIGUSR1,&act,NULL);				//signal handler for SIGUSR1
-	sigaction(SIGUSR2,&act,NULL);				//signal handler for SIGUSR2
+	sigaction(SIGUSR1,&act,NULL);				
 	sigaction(SIGALRM,&act,NULL);
 	sigaction(SIGCHLD,&act,NULL);
+	// sigaction(SIGINT,&act,NULL);
+	// sigaction(SIGUSR2,&act,NULL);				
 
 	paths_to_pid = malloc(sizeof(int)*lines);
 	for (i=0;i<lines;i++)
@@ -144,13 +144,13 @@ int main(int argc , char* argv[])
 		name2[i] = malloc(sizeof(char)*(strlen(FIFO)+12));
 	}
 	
-	int readfd , writefd , status;
+	int status;
 	for (i=0;i<W;i++)
 	{
 		pid_ar[i] = fork();
 		if (!pid_ar[i])					// child process 
 		{
-			for (int y=0;y<W;y++)	//malloc'd before fork , so i free them
+			for (int y=0;y<W;y++)		//malloc'd before fork , so i free them
 			{
 				free(name[y]);
 				free(name2[y]);
@@ -197,6 +197,6 @@ int main(int argc , char* argv[])
 	free(name2);
 	fclose(fp);
 	free(pid_ar);
-	printf("~End of parent!~\n");
+	printf("~End of jobExecutor!~\n");
 	return 0;
 }

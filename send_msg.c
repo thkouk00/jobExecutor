@@ -28,7 +28,6 @@ void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid ,int *path
 		getline(&buff,&buff_size,*fp);
 		buff[strlen(buff)-1] = '\0';
 
-		// printf("PARENT->%s\n",buff);
 		write(writefd, buff, sizeof(char)*max_chars); 
 		*temp_lines-=1;
 		free(buff);
@@ -44,7 +43,4 @@ void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid ,int *path
 		}
 	}
 	close(writefd);
-	// printf("Just finish sending paths temp_lines %d\n",*temp_lines);
-	// unlink(name);
-	// free(name);
 }

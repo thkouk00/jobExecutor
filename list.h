@@ -18,16 +18,9 @@ typedef struct list 		//for posting list
 	struct list *next;
 }listNode;
 
-// typedef struct list_search 		// for search 
-// {
-// 	int number_of_times;
-// 	int word_from;
-// 	struct list_search *next;
-// }list_t;
-
 typedef struct Line_info 			// holds info about line and offset , used in posting list
 {
-	int line;
+	// int line;
 	long offset;
 	struct Line_info *next;
 }line_info;
@@ -47,10 +40,6 @@ void print(listNode **);
 void length(listNode **);
 void FreeList(listNode **);
 
-// // for /search
-// void insert_search(list_t **, int, int);
-// void print_search(list_t **);
-// void FreeList_search(list_t **);
 
 // struct for line info (offset-line)
 void insert_lineInfo(line_info **,int , long );

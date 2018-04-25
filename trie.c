@@ -20,7 +20,7 @@ trieNode_t * CreateTrieNode(char key)		//initialize root
 	node->children = NULL;
 	node->neighbor = NULL;
 	node->plist = NULL;
-	node->endofword = 0;
+	// node->endofword = 0;
 	return node;
 }
 
@@ -80,12 +80,10 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 		}
 		key++;
 	}
-	
-	// tempNode->endofword = 1;			//axriasto , mono sthn print to exw valei alla mporw na to vgalw
-	trie_list *cur = tempNode->plist;
+	// printf("SENT FOR %s\n", tmpstr);
+	// if (tempNode->plist == NULL)
+	// 	printf("PLIST EINAI NULL\n");
 	insert_to_plist(&(tempNode->plist), name, line_num, offset);
-	// insert_to_plist(&cur, name, line_num, offset);
-	// printf("OUT OF AddNode %d\n", getpid());
 }
 
 // print word if exists in trie , else print "not found"
@@ -150,12 +148,12 @@ void printNode(trieNode_t **root,char *key)
 	if (!strncmp(buffer, str,strlen(str)))
 	{
 		finish = 1;
-		trie_list *l = tempNode->plist;
-		while (l->next)
-		{
-			l = l->next;
-			// printf("NAME is %s and %d\n",l->name,l->number_of_times);
-		}
+		// trie_list *l = tempNode->plist;
+		// while (l->next)
+		// {
+		// 	l = l->next;
+		// 	// printf("NAME is %s and %d\n",l->name,l->number_of_times);
+		// }
 	}
 	else
 	{
@@ -168,7 +166,8 @@ void printNode(trieNode_t **root,char *key)
 	// printf("%s\n",buffer);
 	free(buffer);
 }
-///////////////////////////////////
+
+
 void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 {
 	int found = 0 , finish = 1, flag = 0;
@@ -315,7 +314,7 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 				strcpy(*name, name1);
 			}
 			else
-				name = NULL;			//edw giati den exw valei *name?? na to tsekaro
+				name = NULL;	
 		}
 	}
 	else
@@ -363,21 +362,28 @@ void FreeTrie(trieNode_t **root)
 		else
 		{
 
-			if (tempNode->plist != NULL)		//free posting list
-			{	
-				// FreeList(&tempNode->plist);
-				t_cur = tempNode->plist;
-				while (t_cur->next)
-				{
-					t_cur2 = t_cur->next;
-					t_cur->next = t_cur2->next;
-					free(t_cur2->name);
-					Free_lineInfo(&t_cur2->linfo);
-					free(t_cur2->linfo);
-					free(t_cur2);
-				}
-				free(tempNode->plist);
-			}
+			// if (tempNode->plist != NULL)		//free posting list
+			// {	
+			// 	// FreeList(&tempNode->plist);
+			// 	t_cur = tempNode->plist;
+			// 	while (t_cur->next)
+			// 	{
+			// 		// printf("HERE1\n");
+			// 		t_cur2 = t_cur->next;
+			// 		// printf("HERE2 %s\n",t_cur2->name);
+			// 		t_cur->next = t_cur2->next;
+			// 		// printf("HERE3\n");
+			// 		free(t_cur2->name);
+			// 		// printf("HERE4\n");
+			// 		Free_lineInfo(&t_cur2->linfo);
+			// 		// printf("HERE5\n");
+			// 		free(t_cur2->linfo);
+			// 		// printf("HERE6\n");
+			// 		free(t_cur2);
+			// 		// printf("HERE7\n");
+			// 	}
+			// 	free(tempNode->plist);
+			// }
 			free(tempNode);
 		}
 	}

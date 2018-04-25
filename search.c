@@ -34,8 +34,7 @@ void search(trieNode_t **trie,char *buff , char *name2, int writefd,FILE *f,int 
 		
 	alarm(deadline);
 	// if (getpid()%2 == 0)						// to check that sigalarm works
-	// 	// usleep(1000*(deadline+1));
-	// 	sleep(1);
+		// sleep(1);
 	while (word != NULL)
 	{	
 		find_word(trie, word, &result, NULL, 3);

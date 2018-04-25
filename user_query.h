@@ -24,6 +24,7 @@
 #include "worker.h"
 
 #define FIFO "/home/thanos/Desktop/fifo"
+static volatile sig_atomic_t end = 0;
 
 void user_query(int ,int *,int *, int *, int*,char **,char **,int,int ,FILE *);
 

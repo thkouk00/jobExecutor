@@ -1,9 +1,21 @@
 #include "user_query.h"
 
+void catchkillsg(int signo)
+{
+	if (signo == SIGINT)
+	{
+		end = 1;
+		write(1, "HERE\n", sizeof(char)*strlen("HERE\n"));
+	}
+}
+
 void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *paths_to_pid,char **name,char **name2,int lines,int max_chars,FILE *fp)
 {
+	static struct sigaction action;
+	action.sa_handler = catchkillsg;
+	sigfillset(&(action.sa_mask));
+	sigaction(SIGINT,&action,NULL);
 	int wrong_input = 0;
-	int *killed_child = malloc(sizeof(int)*W);
 	while(1)
 	{
 		int x , n , i;
@@ -13,16 +25,30 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		size_t buff_size;
 		int old_pid , kill_flag = 0;
 		int path_count=0;
+		printf("END is %d\n", end);
+		// if (end)
+		// {
+		// 	printf("MPIKA\n");
+		// 	for (i=0;i<W;i++)
+		// 	{
+		// 		while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
+		// 			usleep(2000);
+		// 		kill(pid_ar[i],SIGUSR1);
+		// 		write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
+		// 	}
+		// 	break;
+		// }
 		if (!wrong_input)
 		{
+			// check if SIGTERM raised for child , if yes replace child
 			for (i=0;i<W;i++)
 			{
 				while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
 					usleep(2000);
-				if (!strcmp(tmp_buff,"~"))
+				if (!strcmp(tmp_buff,"~"))		//child must die
 				{
-					// printf("IN HEREEE\n");
 					// free memory from killed child
+					// send message to child to end
 					kill(pid_ar[i],SIGUSR1);							
 					write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
 					close(writefd_array[i]);
@@ -32,9 +58,24 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 					
 					pid_ar[i] = fork();					//fork new child
 					if (!pid_ar[i])
+					{
+						for (int y=0;y<W;y++)	//malloc'd before fork , so i free them
+						{
+							free(name[y]);
+							free(name2[y]);
+						}
+						free(name);
+						free(name2);
+						free(tmp_buff);
+						free(paths_to_pid);
+						free(readfd_array);
+						free(writefd_array);
+						//start new worker
 						worker(max_chars, fp, pid_ar);
+					}
 					else
 					{
+						//replace old workers info 
 						path_count = 0;
 						for (int j=0;j<lines;j++)
 						{
@@ -54,15 +95,12 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 							usleep(2000);
 						write(writefd_array[i], &path_count, sizeof(int));
 						fseek(fp, 0, SEEK_SET);
-						for (int j=0;j<lines;j++)
+						for (int j=0;j<lines;j++)		//send paths to new worker
 						{
 							getline(&buff,&buff_size,fp);
 							if (paths_to_pid[j] == pid_ar[i])
 							{
-								// if (buff[strlen(buff)-1] == '\n')		
-								// 	buff[strlen(buff)-1] = '\0';
-								buff[strlen(buff)-1] = '\0';	
-								// printf("BUFF IS:\n%s.\n",buff);		
+								buff[strlen(buff)-1] = '\0';			
 								write(writefd_array[i], buff, sizeof(char)*max_chars); 
 							}
 							free(buff);
@@ -75,20 +113,14 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 						while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
 							usleep(2000);
 					}
-					//fork new child
-					//send killed child paths to new child
-					
 				}
-				else if (!strcmp(tmp_buff,"^"))
+				else if (!strcmp(tmp_buff,"^"))		//child is alive
 				{
-					continue;//zontano
+					continue;
 				}
 			}
 		}
-		// if (kill_flag)
-		// {
-		// 	while ((readfd_array[i] = open(name2[i], O_RDONLY|O_NONBLOCK))<0);
-		// }
+		
 		printf("Give input:\n");
 		while ((x=getline(&buff,&buff_size,stdin))<=0);
 		char delimiter[] = " \t\n";
@@ -101,9 +133,26 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		int final_num; 					//used in max/mincount
 		int deadline = -1;				//used for search
 
+		// printf("EDW END %d\n", end);
+		// if (end)
+		// {
+		// 	printf("MPIKA\n");
+		// 	for (i=0;i<W;i++)
+		// 	{
+		// 		// while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
+		// 		// 	usleep(2000);
+		// 		kill(pid_ar[i],SIGUSR1);
+		// 		write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
+		// 	}
+		// 	break;
+		// }
 
+		// check if query is valid
+		// if yes , send query to workers and wait for answer
+		// else user must try again
 		if (!strncmp(txt, "/search", strlen("/search")+1) && strlen(buff)>13)
 		{
+			int cnt = 0;
 			char *word2;
 			deadline = -1;
 			temp_buff2 = malloc(sizeof(char)*strlen(buff));
@@ -111,27 +160,30 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 			word = strtok(buff, " \0\n");
 			while (word != NULL)				// check input for -d N 
 			{
-				if (!strcmp(word,"-d"))
-				{
-
-					word = strtok(NULL, " \0\n");
-					if (word == NULL)
-						break;
-					word2 = strtok(NULL, " \0\n");
-					if (word2 == NULL)
-					{
-						deadline = atoi(word);
-						break;
-					}
-					else
-					{
-						word = word2;
-					}
-				}
+				cnt++;
 				word = strtok(NULL, " \0\n");
 			}	
+			strcpy(buff, temp_buff2);
+			word = strtok(buff, " \0\n");
+			int loop = 0;
+			while (word != NULL)				// check input for -d N 
+			{
+				loop++;
+				if (loop == cnt-1)
+				{
+					if (!strcmp(word,"-d"))
+					{
+						word = strtok(NULL, " \0\n");
+						deadline = atoi(word);
+					}
+					else
+						break;
+				}
+				word = strtok(NULL, " \0\n");
+			}
 			if (deadline > 0)
 			{	
+				printf("DEADLINE %d\n", deadline);
 				valid = 1;
 				sprintf(tmp_buff, "%d",deadline);
 				memset(buff, 0, sizeof(char)*buff_size);
@@ -177,7 +229,6 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		if (valid)
 		{
 			wrong_input = 0;
-			// sprintf(tmp_buff, "%ld",strlen(buff));
 			txt = NULL;
 			for (int j=0;j<W;j++)				//send query to workers
 			{	
@@ -219,12 +270,16 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 						strcpy(results[j], temp_buff2);
 						free(temp_buff2);
 					}
-					else
+					else			
 					{
+						//no response till deadline , ignore answer
 						results[j] = NULL;
 						workers_failed--;
 					}
 				}
+				// de-serialize answer
+				// one message for every query from every worker
+				// structure of msg: file|offset0|offset1|...|offsetN|$|...
 				for (int j=0;j<W;j++)
 				{
 					if (results[j] == NULL)
@@ -364,6 +419,6 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		}
 		free(temp);
 		free(buff);
-		buff = NULL;		
+		buff = NULL;
 	};
 }
