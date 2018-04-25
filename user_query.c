@@ -133,20 +133,6 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		int final_num; 					//used in max/mincount
 		int deadline = -1;				//used for search
 
-		// printf("EDW END %d\n", end);
-		// if (end)
-		// {
-		// 	printf("MPIKA\n");
-		// 	for (i=0;i<W;i++)
-		// 	{
-		// 		// while ((n=read(readfd_array[i],tmp_buff, sizeof(char)*2))<=0)
-		// 		// 	usleep(2000);
-		// 		kill(pid_ar[i],SIGUSR1);
-		// 		write(writefd_array[i], "-1", sizeof(char)*20);		//send -1 to stop child's loop
-		// 	}
-		// 	break;
-		// }
-
 		// check if query is valid
 		// if yes , send query to workers and wait for answer
 		// else user must try again
@@ -166,7 +152,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 			strcpy(buff, temp_buff2);
 			word = strtok(buff, " \0\n");
 			int loop = 0;
-			while (word != NULL)				// check input for -d N 
+			while (word != NULL)				 
 			{
 				loop++;
 				if (loop == cnt-1)
@@ -212,12 +198,12 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				//send -1 to stop child's loop
 				write(writefd_array[j], "-1", sizeof(char)*20);
 				close(writefd_array[j]);
-				close(readfd_array[j]);		//den to eixa katholoy
+				close(readfd_array[j]);		
 			}
-			free(writefd_array);			//oute ayta ta xa
+			free(writefd_array);			
 			free(readfd_array);
 			free(tmp_buff);
-			free(buff);						//extra kai ayto
+			free(buff);						
 			break;
 		}
 		else

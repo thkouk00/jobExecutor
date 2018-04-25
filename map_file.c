@@ -18,7 +18,7 @@ void map_file(FILE *file,listNode **info,char *filename)
 	for (i=0;i<cur->lines;i++)
 	{
 		getline(&buff,&buff_size,file);
-		
+		buff[strlen(buff)] = '\0';
 		if (buff[strlen(buff)-1] =='\n')
 		{
 			cur->map[i] = malloc(sizeof(char)*(strlen(buff)));	

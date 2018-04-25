@@ -36,7 +36,6 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 		fprintf(stderr, "Not initialized Trie!\n");
 		exit(1);
 	}
-
 	
 	tempNode = *root;
 	while (*key != '\0')
@@ -217,7 +216,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 
 	}
 	buffer[i] = '\0'; 	
-	
 	if (!strncmp(buffer, str,strlen(str)) && tempNode->plist!=NULL) 
 	{
 		char *name1=NULL;
@@ -239,7 +237,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 					buff_size += buff_size;
 					result = realloc(result, buff_size);
 				}
-				// printf("CURNAME %s.\n", cur->name);
 				sprintf(result+strlen(result), "%s|",cur->name);
 				while (line_cur->next)
 				{
@@ -355,23 +352,15 @@ void FreeTrie(trieNode_t **root)
 
 			if (tempNode->plist != NULL)		//free posting list
 			{	
-				// FreeList(&tempNode->plist);
 				t_cur = tempNode->plist;
 				while (t_cur->next)
 				{
-					// printf("HERE1\n");
 					t_cur2 = t_cur->next;
-					// printf("HERE2 %s\n",t_cur2->name);
 					t_cur->next = t_cur2->next;
-					// printf("HERE3\n");
 					free(t_cur2->name);
-					// printf("HERE4\n");
 					Free_lineInfo(&t_cur2->linfo);
-					// printf("HERE5\n");
 					free(t_cur2->linfo);
-					// printf("HERE6\n");
 					free(t_cur2);
-					// printf("HERE7\n");
 				}
 				free(tempNode->plist);
 			}

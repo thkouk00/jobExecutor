@@ -56,6 +56,7 @@ void fill_trie(listNode **head,trieNode_t **root)
 				str1 = strtok(str, delimiter);
 				while (str1!=NULL)
 				{
+					// printf("%s\n", str1);
 					AddNode(root,str1,i,cur->name,cur->offset_array[i]);
 					str1 = strtok(NULL, delimiter);
 				}
@@ -94,7 +95,7 @@ void length(listNode **head)
 	printf("Length %d\n",len);
 }
 
-void FreeList(listNode **head)			// edw exw kanei free egw
+void FreeList(listNode **head)		
 {
 	listNode *cur = *head;
 	listNode *cur2;
@@ -139,6 +140,7 @@ void insert_lineInfo(line_info **head,int line, long offset)
 		line_info *n = (line_info*)malloc(sizeof(struct Line_info));
 		// n->line = line;
 		n->offset = offset;
+		// printf("Line %d OFFSET %ld\n", line,n->offset);
 		n->next = NULL;
 		cur->next = n;
 	}
@@ -222,7 +224,6 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 		temp->name = malloc(sizeof(char)*(strlen(name)+1));		
 		memcpy(temp->name, name, strlen(name));
 		temp->name[strlen(name)] = '\0';
-		// printf("PLIST %s.\n", temp->name);
 		temp->linfo = NULL;
 		temp->number_of_times = 1;
 		insert_lineInfo(&(temp->linfo), line, offset);

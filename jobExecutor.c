@@ -24,9 +24,7 @@
 #define LOG "/home/thanos/Desktop/log/Worker_"
 #define PERMS 0666
 
-// static volatile sig_atomic_t triggered = 0;
 static volatile sig_atomic_t stop = 0;
-// static volatile sig_atomic_t end = 0;
 
 void Usage(char *prog_name)			/* Usage */
 {
