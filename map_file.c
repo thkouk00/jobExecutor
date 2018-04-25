@@ -4,7 +4,6 @@ void map_file(FILE *file,listNode **info,char *filename)
 {
 	listNode *cur = *info;
 	int x,i=0;
-	printf("**BEF WHILEE**\n");
 	while (cur->next)
 	{
 		cur = cur->next;
@@ -22,7 +21,7 @@ void map_file(FILE *file,listNode **info,char *filename)
 		
 		if (buff[strlen(buff)-1] =='\n')
 		{
-			cur->map[i] = malloc(sizeof(char)*(strlen(buff)));	//htan xwris 1
+			cur->map[i] = malloc(sizeof(char)*(strlen(buff)));	
 			memset(cur->map[i], 0, strlen(buff));
 			memcpy(cur->map[i], buff, strlen(buff)-1);
 		}	

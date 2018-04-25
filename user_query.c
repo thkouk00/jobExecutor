@@ -25,7 +25,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		size_t buff_size;
 		int old_pid , kill_flag = 0;
 		int path_count=0;
-		printf("END is %d\n", end);
+		// printf("END is %d\n", end);
 		// if (end)
 		// {
 		// 	printf("MPIKA\n");
@@ -183,11 +183,10 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 			}
 			if (deadline > 0)
 			{	
-				printf("DEADLINE %d\n", deadline);
 				valid = 1;
 				sprintf(tmp_buff, "%d",deadline);
 				memset(buff, 0, sizeof(char)*buff_size);
-				strncpy(buff, temp_buff2, strlen(temp_buff2)-strlen(tmp_buff)-4);
+				memcpy(buff, temp_buff2, strlen(temp_buff2)-strlen(tmp_buff)-4);
 			}
 			else
 			{
@@ -234,7 +233,6 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 			{	
 				sprintf(tmp_buff, "%ld",strlen(buff));
 				kill(pid_ar[j],SIGUSR1);
-				
 				//inform child how many chars to expect
 				write(writefd_array[j], tmp_buff, sizeof(char)*20);		
 				//send query
@@ -256,7 +254,6 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				char **results = malloc(sizeof(char*)*W);
 				for (int j=0;j<W;j++)
 				{
-					
 					while ((n=read(readfd_array[j],tmp_buff, sizeof(char)*20))<=0)
 						usleep(2000);
 					word = strtok(tmp_buff, " \0\n");

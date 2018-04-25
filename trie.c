@@ -16,11 +16,9 @@ trieNode_t * CreateTrieNode(char key)		//initialize root
 		return node;
 	}
 	node->key = key;
-	// printf("NODE KEY is %c\n", node->key);
 	node->children = NULL;
 	node->neighbor = NULL;
 	node->plist = NULL;
-	// node->endofword = 0;
 	return node;
 }
 
@@ -80,9 +78,6 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 		}
 		key++;
 	}
-	// printf("SENT FOR %s\n", tmpstr);
-	// if (tempNode->plist == NULL)
-	// 	printf("PLIST EINAI NULL\n");
 	insert_to_plist(&(tempNode->plist), name, line_num, offset);
 }
 
@@ -114,7 +109,6 @@ void printNode(trieNode_t **root,char *key)
 			if (tempNode->key == *key)
 			{
 				buffer[i] = tempNode->key;
-				// printf("%c\n", tempNode->key);
 				flag = 1;
 				break;
 			}
@@ -126,7 +120,6 @@ void printNode(trieNode_t **root,char *key)
 					if (tempNode->key == *key)
 					{
 						buffer[i] = tempNode->key;
-						// printf("%c\n", tempNode->key);
 						flag  = 1;
 						found = 1;
 						break;
@@ -195,7 +188,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 			if (tempNode->key == *key)
 			{
 				buffer[i] = tempNode->key;
-				// printf("%c\n", tempNode->key);
 				flag = 1;
 				break;
 			}
@@ -207,7 +199,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 					if (tempNode->key == *key)
 					{
 						buffer[i] = tempNode->key;
-						// printf("%c\n", tempNode->key);
 						flag  = 1;
 						found = 1;
 						break;
@@ -248,6 +239,7 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 					buff_size += buff_size;
 					result = realloc(result, buff_size);
 				}
+				// printf("CURNAME %s.\n", cur->name);
 				sprintf(result+strlen(result), "%s|",cur->name);
 				while (line_cur->next)
 				{
@@ -270,7 +262,6 @@ void find_word(trieNode_t **root,char *key,char **name,int *number,int choice)
 			}
 			*name = result;
 			free(tmp_buff);
-			// free(result);
 		}
 		else
 		{
@@ -362,28 +353,28 @@ void FreeTrie(trieNode_t **root)
 		else
 		{
 
-			// if (tempNode->plist != NULL)		//free posting list
-			// {	
-			// 	// FreeList(&tempNode->plist);
-			// 	t_cur = tempNode->plist;
-			// 	while (t_cur->next)
-			// 	{
-			// 		// printf("HERE1\n");
-			// 		t_cur2 = t_cur->next;
-			// 		// printf("HERE2 %s\n",t_cur2->name);
-			// 		t_cur->next = t_cur2->next;
-			// 		// printf("HERE3\n");
-			// 		free(t_cur2->name);
-			// 		// printf("HERE4\n");
-			// 		Free_lineInfo(&t_cur2->linfo);
-			// 		// printf("HERE5\n");
-			// 		free(t_cur2->linfo);
-			// 		// printf("HERE6\n");
-			// 		free(t_cur2);
-			// 		// printf("HERE7\n");
-			// 	}
-			// 	free(tempNode->plist);
-			// }
+			if (tempNode->plist != NULL)		//free posting list
+			{	
+				// FreeList(&tempNode->plist);
+				t_cur = tempNode->plist;
+				while (t_cur->next)
+				{
+					// printf("HERE1\n");
+					t_cur2 = t_cur->next;
+					// printf("HERE2 %s\n",t_cur2->name);
+					t_cur->next = t_cur2->next;
+					// printf("HERE3\n");
+					free(t_cur2->name);
+					// printf("HERE4\n");
+					Free_lineInfo(&t_cur2->linfo);
+					// printf("HERE5\n");
+					free(t_cur2->linfo);
+					// printf("HERE6\n");
+					free(t_cur2);
+					// printf("HERE7\n");
+				}
+				free(tempNode->plist);
+			}
 			free(tempNode);
 		}
 	}

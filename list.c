@@ -20,15 +20,9 @@ void insert(listNode **head,char *name,int lines,int max_chars,int *offset_array
 	listNode *cur = *head;
 
 	listNode *n = (listNode*)malloc(sizeof(struct list));
-	// n->name = malloc(sizeof(char)*(strlen(name)+2));
 	n->name = malloc(sizeof(char)*(strlen(name)+1));
-	// strncpy(n->name, name,strlen(name)+1); //htan +1
-	// strncpy(n->name, name,strlen(name));
 	memcpy(n->name, name, strlen(name));
 	n->name[strlen(name)] = '\0';
-	printf("NAME is %s.\n", n->name);
-	// n->name[strlen(name)+2] = '\0';
-	// n->name[strlen(name)+1] = '\0';
 	n->lines = lines;
 	n->max_chars = max_chars;
 	n->map = malloc(sizeof(char*)*lines);
@@ -47,7 +41,7 @@ void fill_trie(listNode **head,trieNode_t **root)
 	listNode *cur = *head;
 	char *str;
 	char *str1;
-	char delimiter[] = " \t\n";			//na dw an xreiazetai  \0
+	char delimiter[] = " \t\n";			
 	if (cur->next == NULL)
 		printf("Empty list\n");
 	else
@@ -133,8 +127,8 @@ void insert_lineInfo(line_info **head,int line, long offset)
 	while (cur->next)					// insert new node at end of list
 	{
 		cur = cur->next;
-		// if (cur->line == line && cur->offset == offset)		//same word in same line
-		if (cur->offset == offset)
+		// if (cur->line == line && cur->offset == offset)		
+		if (cur->offset == offset)							//same word in same line
 		{
 			flag = 1;
 			break;
@@ -207,51 +201,34 @@ void insert_to_plist(trie_list **head, char *name,int line,long offset)
 	// trie_list *cur1 = *head;
 	int flag = 0;
 
-	// printf("*BEF WHILE*\n");
-	// if (cur->next == NULL)
-	// 	printf("EINAI NULL\n");
 	if (cur->next != NULL)
 	{
 		while (cur->next)
 		{
-			// printf("**IN WHILE**\n");
 			cur = cur->next;
 			if (!strcmp(cur->name, name))
 			{
 				flag = 1;
 				cur->number_of_times++;
-				// printf("PRIN APO YPARXON LINFO\n");
 				insert_lineInfo(&(cur->linfo), line, offset);
-				// printf("META APO YPARXON LINFO\n");
 				break;
 			}
-			// printf("**OUT WHILE**\n");
 		}
 	}
 
-	// printf("%s and flag %d line %d and offset %ld\n", name,flag,line,offset);
 	if (flag == 0)
 	{
-		// printf("MPAINW !FLAG\n");
-		// printf("LALALA\n");
-		// if (temp == NULL)
-		// 	printf("ERROR GAMW\n");
 		temp = (trie_list*)malloc(sizeof(struct Trie_list));
-		temp->name = malloc(sizeof(char)*(strlen(name)+1));		//den htan to +1
-		strncpy(temp->name,name,strlen(name));
+		temp->name = malloc(sizeof(char)*(strlen(name)+1));		
+		memcpy(temp->name, name, strlen(name));
 		temp->name[strlen(name)] = '\0';
+		// printf("PLIST %s.\n", temp->name);
 		temp->linfo = NULL;
 		temp->number_of_times = 1;
-		// printf("PRIN APO NEW LINFO\n");
 		insert_lineInfo(&(temp->linfo), line, offset);
-		// printf("META APO NEW LINFO\n");
-		// temp->next = cur1->next;
-		// cur1->next = temp;
 		temp->next = NULL;						
 		cur->next = temp;
 	}
-	// printf("*END PLIST*\n");
-
 }
 
 int length_plist(trie_list **head)

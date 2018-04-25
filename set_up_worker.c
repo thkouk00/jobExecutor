@@ -58,7 +58,7 @@ void set_up_worker(listNode **info,char *path_array)
 			buff = NULL;
 			buff_size = 0;
 		}
-		free(buff);				//extra
+		free(buff);				
 		buff = NULL;
 		fseek(file, 0, SEEK_SET);
 		pos--;	 
@@ -66,7 +66,7 @@ void set_up_worker(listNode **info,char *path_array)
 		map_file(file,info,filename);				//function to map file
 		fclose(file);
 		free(filename);
-		free(offset_array);		//extra
+		free(offset_array);		
 	}
 	closedir(dp);
 }

@@ -59,8 +59,6 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	while ((n=read(readfd, &num_of_paths, sizeof(int)))<=0) 		// read number of paths 
 		usleep(2000);
 
-	// printf("NUMOFPAATHS %d %d\n",num_of_paths,getpid());
-
 	char **path_array = malloc(sizeof(char*)*num_of_paths);
 	char *tmp_buff = malloc(sizeof(char)*(max_chars));
 	for (y=0;y<num_of_paths;y++)			// store path names 
@@ -68,10 +66,7 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 		while ((n=read(readfd,tmp_buff, sizeof(char)*(max_chars)))<=0)
 			usleep(2000);
 		path_array[y] = malloc(sizeof(char)*(strlen(tmp_buff)+1));	
-		// strncpy(path_array[y], tmp_buff , strlen(tmp_buff));
-		// path_array[y][strlen(tmp_buff)] = '\0';
 		memcpy(path_array[y], tmp_buff, strlen(tmp_buff)+1);
-		printf("PATH ARRAy %s.\n", path_array[y]);
 	}
 	free(tmp_buff);
 	
@@ -97,7 +92,7 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 	//worker must wait for message from jobExecutor for queries
 	while ((writefd = open(name2, O_WRONLY|O_NONBLOCK))<0)
 		usleep(2000);
-	while(1)			// htan !stop
+	while(1)	
 	{
 		if (!end)
 		{

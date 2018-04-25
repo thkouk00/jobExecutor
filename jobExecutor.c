@@ -108,7 +108,6 @@ int main(int argc , char* argv[])
 	};
 	free(buff);							
 	buff = NULL;
-	printf("Lines %d\n",lines);
 	
 	int temp_lines = lines;		
 	int num_of_paths = 0 ;				//before sent msg to child, holds number of paths to sent
