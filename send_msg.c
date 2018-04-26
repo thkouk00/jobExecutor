@@ -26,7 +26,8 @@ void send_msg(FILE **fp,char *name,char *name2,int max_chars ,int pid ,int *path
 	for (y=0;y<num_of_paths;y++)
 	{
 		getline(&buff,&buff_size,*fp);
-		buff[strlen(buff)-1] = '\0';
+		if (buff[strlen(buff)-1] == '\n')
+			buff[strlen(buff)-1] = '\0';
 
 		write(writefd, buff, sizeof(char)*max_chars); 
 		*temp_lines-=1;

@@ -82,9 +82,6 @@ void worker(int max_chars,FILE *fp,int *pid_ar)
 		set_up_worker(&info[y],path_array[y]);			//takes docfiles and map them
 		fill_trie(&info[y], &trie);						//insert to trie
 	}
-	printNode(&trie, "syspro");
-	printNode(&trie, "to");
-	printNode(&trie, "aoakakak");
 	int size_to_read;
 	char *buff = NULL;
 	tmp_buff = malloc(sizeof(char)*20); 	//buffer to hold number sent from parent
