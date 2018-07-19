@@ -122,6 +122,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 		}
 		
 		printf("Give input:\n");
+		fflush(stdout);
 		while ((x=getline(&buff,&buff_size,stdin))<=0);
 		char delimiter[] = " \t\n";
 		char *temp = malloc(sizeof(char)*(strlen(buff)+1));
@@ -179,6 +180,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 				valid = 0;
 				wrong_input = 1;
 				printf("Wrong input try again\n");
+				fflush(stdout);
 			}
 			free(temp_buff2);
 		}
@@ -287,6 +289,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 							fseek(fpointer,offset,SEEK_SET);
 							getline(&line_buff,&s,fpointer);
 							printf("%s\n", line_buff);
+							fflush(stdout);
 							free(line_buff);
 							line_buff = NULL;
 						}
@@ -294,6 +297,7 @@ void user_query(int W,int *pid_ar,int *readfd_array , int *writefd_array,int *pa
 					}
 				}
 				printf("Result from %d/%d workers!\n", workers_failed,W);
+				fflush(stdout);
 				
 				for (int j=0;j<W;j++)
 				{

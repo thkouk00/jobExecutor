@@ -20,8 +20,8 @@
 #include "wc.h"
 #include "search.h"
 
-#define FIFO "/home/thanos/Desktop/fifo"
-#define LOG "/home/thanos/Desktop/log/Worker_"
+#define FIFO "/tmp/fifo"
+#define LOG "/tmp/log/Worker_"
 #define PERMS 0666
 
 static volatile sig_atomic_t stop = 0;

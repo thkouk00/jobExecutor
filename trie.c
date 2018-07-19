@@ -36,7 +36,9 @@ void AddNode(trieNode_t **root,char *key,int line_num, char *name,int offset)
 		fprintf(stderr, "Not initialized Trie!\n");
 		exit(1);
 	}
-	
+	//ignore html tags - project3
+	if (*key == '<' || *key == '>' || !strncmp(key, "href=", 5))
+		return ;
 	tempNode = *root;
 	while (*key != '\0')
 	{

@@ -21,10 +21,8 @@
 #include "wc.h"
 #include "search.h"
 
-#define FIFO "/home/thanos/Desktop/fifo"
-#define FIFO1 "/home/thanos/Desktop/fifo1"
-#define FIFO2 "/home/thanos/Desktop/fifo2"
-#define LOG "/home/thanos/Desktop/log/Worker_"
+#define FIFO "/tmp/fifo"
+#define LOG "/tmp/log/Worker_"
 #define PERMS 0666
 
 void worker(int,FILE *,int *);

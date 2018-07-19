@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#define FIFO "/home/thanos/Desktop/fifo"
+#define FIFO "/tmp/fifo"
 
 void send_msg(FILE **,char*,char *,int ,int , int *,int* , int* , int* , int* ,int);
 
